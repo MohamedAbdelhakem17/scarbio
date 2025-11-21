@@ -1,0 +1,12 @@
+# Ignore all node_modules folders
+**/node_modules/
+
+# Ignore client build output
+/client/dist/
+
+# Ignore uploaded JPEGs in nested folders under server/uploads/
+server/uploads/*/*
+server/results/*/*
+
+# Ignore .env file
+/server/.env.local
