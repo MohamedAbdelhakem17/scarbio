@@ -29,7 +29,7 @@ export default function Navbar() {
           <Image
             src='/assets/images/logo.png'
             alt='Scarbio | Powerful SEO Platform'
-            className='w-72 object-contain'
+            className='h-12 w-72 object-contain'
             width={260}
             height={54}
           />

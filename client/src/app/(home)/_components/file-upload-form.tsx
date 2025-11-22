@@ -70,8 +70,6 @@ export default function FileUploadForm() {
     try {
       const response = await fileUploadAction(formData);
 
-      console.log(response);
-
       if (response.success) {
         sessionStorage.setItem('analysisResult', JSON.stringify(response));
 
