@@ -22,7 +22,7 @@ const buttonVariants = cva(
         link: 'text-primary underline-offset-4 hover:underline',
         glass:
           'bg-white/60 backdrop-blur-md border border-white/20 text-white shadow bg-brand-dark/40 backdrop-blur-sm hover:bg-brand-dark/30 ' +
-          'hover:bg-white/20 hover:border-white/30 hover:shadow-md transition',
+          'hover:bg-brand-base/50 hover:border-white/30 hover:shadow-md transition hover:text-primary',
       },
       size: {
         default: 'h-9 px-4 py-2',

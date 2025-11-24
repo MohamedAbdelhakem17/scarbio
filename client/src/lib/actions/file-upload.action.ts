@@ -4,13 +4,10 @@ export const fileUploadAction = async (data: FormData) => {
   const apiUrl = process.env.API_URL;
 
   try {
-    const response = await fetch(
-      `https://api.scarabio.com/api/v1/analysis/analyze-file`,
-      {
-        method: 'POST',
-        body: data,
-      }
-    );
+    const response = await fetch(`${apiUrl}/api/v1/analysis/analyze-file`, {
+      method: 'POST',
+      body: data,
+    });
 
     const payload = await response.json();
 
