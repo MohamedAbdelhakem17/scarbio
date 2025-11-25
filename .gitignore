@@ -9,4 +9,4 @@ server/uploads/*/*
 server/results/*/*
 
 # Ignore .env file
-/server/.env.local
+**/.env.local
