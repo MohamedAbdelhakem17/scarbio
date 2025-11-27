@@ -1,4 +1,5 @@
-/** @type {import('next').NextConfig} */ constant;
+/** @type {import('next').NextConfig} */
+
 const redirectsList = [
   {
     from: 'https://scarabio.com/%d8%af%d9%84%d9%8a%d9%84-%d8%aa%d8%ad%d8%b3%d9%8a%d9%86-%d9%85%d8%ad%d8%b1%d9%83%d8%a7%d8%aa-%d8%a7%d9%84%d8%a8%d8%ad%d8%ab-%d9%81%d9%8a-%d9%8a%d8%a7%d9%86%d8%af%d9%83%d8%b3/',
