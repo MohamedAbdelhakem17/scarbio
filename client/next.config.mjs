@@ -66,10 +66,10 @@ const nextConfig = {
         .replace('https://scarabio.com', '')
         .replace('http://scarabio.com', '');
 
+      const decoded = decodeURIComponent(cleanedSource);
+
       return {
-        source: cleanedSource.startsWith('/')
-          ? cleanedSource
-          : `/${cleanedSource}`,
+        source: decoded.startsWith('/') ? decoded : `/${decoded}`,
         destination: item.to,
         permanent: true,
       };
