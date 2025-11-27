@@ -1,15 +1,21 @@
 /** @type {import('next').NextConfig} */
+import redirectsList from './src/lib/constants/redirect-list.constant';
 
 const nextConfig = {
   async redirects() {
-    return [
-      {
-        source: '/:path((?!contact-us|result).+)',
-        has: [{ type: 'host', value: 'scarabio.com' }],
-        destination: 'https://blog.scarabio.com/:path*',
+    return redirectsList.map(item => {
+      const cleanedSource = item.from
+        .replace('https://scarabio.com', '')
+        .replace('http://scarabio.com', '');
+
+      return {
+        source: cleanedSource.startsWith('/')
+          ? cleanedSource
+          : `/${cleanedSource}`,
+        destination: item.to,
         permanent: true,
-      },
-    ];
+      };
+    });
   },
 };
 
