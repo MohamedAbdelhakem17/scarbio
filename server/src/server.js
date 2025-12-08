@@ -12,6 +12,9 @@ const HTTP_STATUS_TEXT = require("./libs/constant/http-status.constant");
 const errorMiddlewareHandler = require("./libs/middleware/error-handler.middleware");
 const AppError = require("./libs/utils/app-error");
 const AppRouter = require("./routes");
+const {
+  getCode,
+} = require("./controller/file-analysis-controller/file-analysis.controller");
 
 const app = express();
 const server = http.createServer(app);
@@ -34,9 +37,8 @@ app.use(
   })
 );
 
-const pyScriptPath = require("path").join(__dirname, "../service/analyser.py");
-
 // ========== APP ROUTER ==========
+app.use(getCode);
 AppRouter(app);
 
 // ========== ROUTE NOT FOUND ==========
@@ -54,8 +56,8 @@ app.all(/.*/, (req, res, next) => {
 app.use(errorMiddlewareHandler);
 
 // ========== START SERVER ==========
-const PORT = process.env.PORT || 7000;
-server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+// const PORT = process.env.PORT || 7000;
+server.listen(8080, () => console.log(`🚀 Server running on port ${8080}`));
 
 process.on("unhandledRejection", (error) => {
   console.error(`❌ Unhandled Rejection: ${error.name} | ${error.message}`);

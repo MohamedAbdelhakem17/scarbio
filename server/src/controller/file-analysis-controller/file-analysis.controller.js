@@ -1,4 +1,4 @@
-// file-analysis.controller.js
+// file-C.controller.js
 const { spawn } = require("child_process");
 const fs = require("fs");
 const path = require("path");
@@ -225,7 +225,45 @@ function analyzeFileController(req, res, pyScriptPath, uploadDir, resultsDir) {
   });
 }
 
+// analyze with google
+const getCode = async (req, res) => {
+  const { code } = req.query;
+  console.log({ code });
+
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.G_CLIENT_ID,
+    process.env.G_CLIENT_SECRET,
+    "http://localhost:3000/auth/callback"
+  );
+
+  const { tokens } = await oauth2Client.getToken(code);
+
+  // شغّل Python Step 1
+  const py = spawn("python", ["gsc_step1.py"], {
+    stdio: ["pipe", "pipe", "pipe"],
+  });
+
+  // ابعت له الـ creds
+  py.stdin.write(JSON.stringify(tokens));
+  py.stdin.end();
+
+  let data = "";
+  py.stdout.on("data", (chunk) => {
+    data += chunk.toString();
+  });
+
+  py.stderr.on("data", (err) => {
+    console.error(err.toString());
+  });
+
+  py.on("close", () => {
+    // رجّع المواقع للفرونت
+    res.json(JSON.parse(data));
+  });
+};
+
 module.exports = {
   analyzeFileController,
   ensureDir,
+  getCode,
 };
