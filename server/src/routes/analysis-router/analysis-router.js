@@ -7,7 +7,7 @@ const fs = require("fs");
 const {
   analyzeFileController,
   ensureDir,
-} = require("../../controller/file-analysis-controller/file-analysis.controller");
+} = require("../../controller/file-analysis-controller/file-analyze.controller");
 
 const DEFAULT_UPLOAD_DIR = path.join(process.cwd(), "uploads");
 const DEFAULT_RESULTS_DIR = path.join(process.cwd(), "results");

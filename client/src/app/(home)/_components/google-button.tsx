@@ -5,7 +5,7 @@ export default function GoogleButton() {
     const params = {
       client_id:
         '816118067676-0ril5bauojsupkedd6jgok9t90628ts3.apps.googleusercontent.com',
-      redirect_uri: 'http://localhost:8080/',
+      redirect_uri: 'http://localhost:8080',
       response_type: 'code',
       access_type: 'offline',
       prompt: 'consent',

@@ -14,7 +14,7 @@ const AppError = require("./libs/utils/app-error");
 const AppRouter = require("./routes");
 const {
   getCode,
-} = require("./controller/file-analysis-controller/file-analysis.controller");
+} = require("./controller/file-analysis-controller/file-analyze.controller");
 
 const app = express();
 const server = http.createServer(app);

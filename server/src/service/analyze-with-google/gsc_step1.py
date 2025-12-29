@@ -5,12 +5,15 @@ from googleapiclient.discovery import build
 # Read creds from Express
 tokens = json.loads(sys.stdin.read())
 
+CLIENT_ID = "816118067676-0ril5bauojsupkedd6jgok9t90628ts3.apps.googleusercontent.com"
+CLIENT_SECRET = "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"
+
 creds = Credentials(
     token=tokens.get("access_token"),
     refresh_token=tokens.get("refresh_token"),
     token_uri="https://oauth2.googleapis.com/token",
-    client_id="YOUR_CLIENT_ID",
-    client_secret="YOUR_CLIENT_SECRET",
+    client_id=CLIENT_ID,
+    client_secret=CLIENT_SECRET,
     scopes=[
         "https://www.googleapis.com/auth/webmasters",
         "https://www.googleapis.com/auth/webmasters.readonly"

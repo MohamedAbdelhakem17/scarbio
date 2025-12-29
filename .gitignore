@@ -10,3 +10,4 @@ server/results/*/*
 
 # Ignore .env file
 **/.env.local
+server/.env.local

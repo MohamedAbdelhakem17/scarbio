@@ -2,6 +2,7 @@
 const { spawn } = require("child_process");
 const fs = require("fs");
 const path = require("path");
+const { google } = require("googleapis");
 
 function ensureDir(dir) {
   if (!fs.existsSync(dir)) {
@@ -227,43 +228,167 @@ function analyzeFileController(req, res, pyScriptPath, uploadDir, resultsDir) {
 
 // analyze with google
 const getCode = async (req, res) => {
-  const { code } = req.query;
-  console.log({ code });
+  try {
+    const { code } = req.query;
 
-  const oauth2Client = new google.auth.OAuth2(
-    process.env.G_CLIENT_ID,
-    process.env.G_CLIENT_SECRET,
-    "http://localhost:3000/auth/callback"
-  );
+    if (!code) {
+      return res.status(400).json({
+        status: "error",
+        message: "No authorization code provided",
+      });
+    }
 
-  const { tokens } = await oauth2Client.getToken(code);
+    console.log("Received code:", code.substring(0, 10) + "...");
 
-  // شغّل Python Step 1
-  const py = spawn("python", ["gsc_step1.py"], {
-    stdio: ["pipe", "pipe", "pipe"],
-  });
+    // Verify environment variables
+    if (!process.env.G_CLIENT_ID || !process.env.G_CLIENT_SECRET) {
+      return res.status(500).json({
+        status: "error",
+        message: "Missing OAuth credentials in environment variables",
+      });
+    }
 
-  // ابعت له الـ creds
-  py.stdin.write(JSON.stringify(tokens));
-  py.stdin.end();
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.G_CLIENT_ID,
+      process.env.G_CLIENT_SECRET,
+      process.env.G_REDIRECT_URL
+    );
 
-  let data = "";
-  py.stdout.on("data", (chunk) => {
-    data += chunk.toString();
-  });
+    console.log("Attempting to exchange code for tokens...");
+    const { tokens } = await oauth2Client.getToken(code);
+    console.log("Successfully received tokens");
 
-  py.stderr.on("data", (err) => {
-    console.error(err.toString());
-  });
+    // Run Python Step 1
+    const pyFile = path.join(
+      __dirname,
+      "../../service/analyze-with-google/gsc_step1.py"
+    );
 
-  py.on("close", () => {
-    // رجّع المواقع للفرونت
-    res.json(JSON.parse(data));
-  });
+    const py = spawn("python", [pyFile], { stdio: ["pipe", "pipe", "pipe"] });
+
+    py.stdin.write(JSON.stringify(tokens));
+    py.stdin.end();
+
+    let data = "";
+    let errorData = "";
+
+    py.stdout.on("data", (chunk) => {
+      data += chunk.toString();
+    });
+
+    py.stderr.on("data", (err) => {
+      errorData += err.toString();
+      console.error("Python stderr:", err.toString());
+    });
+
+    py.on("close", (exitCode) => {
+      if (exitCode !== 0) {
+        return res.status(500).json({
+          status: "error",
+          message: "Python script failed",
+          details: errorData,
+        });
+      }
+
+      try {
+        const pythonResponse = JSON.parse(data);
+
+        return res.json({
+          status: "success",
+          python: pythonResponse,
+          tokens: tokens,
+        });
+      } catch (parseError) {
+        return res.status(500).json({
+          status: "error",
+          message: "Failed to parse Python output",
+          details: data,
+        });
+      }
+    });
+  } catch (error) {
+    console.error("OAuth error:", error);
+
+    if (error.code === "invalid_grant") {
+      return res.status(400).json({
+        status: "error",
+        message:
+          "Authorization code is invalid or expired. Please authenticate again.",
+        hint: "The code may have already been used or has expired",
+      });
+    }
+
+    res.status(500).json({
+      status: "error",
+      message: error.message || "Failed to exchange authorization code",
+      details: error.response?.data || error.toString(),
+    });
+  }
 };
 
+const getDataWithGoogle = async (req, res) => {
+  try {
+    const { url, tokens, start_date, end_date } = req.body;
+
+    const inputData = JSON.stringify({
+      site_url: url,
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+      start_date,
+      end_date,
+    });
+
+    const pyFile = path.join(
+      __dirname,
+      "../../service/analyze-with-google/gsc_step2.py"
+    );
+
+    const py = spawn("python", [pyFile], { stdio: ["pipe", "pipe", "pipe"] });
+
+    let output = "";
+    let errorOutput = "";
+
+    py.stdout.on("data", (data) => {
+      output += data.toString();
+    });
+
+    py.stderr.on("data", (data) => {
+      errorOutput += data.toString();
+    });
+
+    py.stdin.write(inputData);
+    py.stdin.end();
+
+    py.on("close", (code) => {
+      if (errorOutput) {
+        return res.status(500).json({
+          success: false,
+          message: "Python script error",
+          details: errorOutput,
+        });
+      }
+
+      try {
+        const result = JSON.parse(output);
+        res.json(result);
+      } catch (err) {
+        res.status(500).json({
+          success: false,
+          message: "Failed to parse Python output",
+          details: output,
+        });
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 module.exports = {
   analyzeFileController,
   ensureDir,
   getCode,
+  getDataWithGoogle,
 };
