@@ -11,14 +11,35 @@ function ensureDir(dir) {
 }
 
 function analyzeFileController(req, res, pyScriptPath, uploadDir, resultsDir) {
-  if (!req.file) {
-    return res.status(400).json({
-      success: false,
-      error: "No file uploaded",
-    });
+  let uploadedFilePath = null;
+
+  // ✅ OPTION 1: File uploaded normally
+  if (req.file) {
+    uploadedFilePath = req.file.path;
   }
 
-  const uploadedFilePath = req.file.path;
+  // ✅ OPTION 2: Use existing file from uploads
+  else if (req.body.filename) {
+    const filePathFromUploads = path.join(uploadDir, req.body.filename);
+
+    if (!fs.existsSync(filePathFromUploads)) {
+      return res.status(400).json({
+        success: false,
+        error: "File not found in uploads folder",
+        filename: req.body.filename,
+      });
+    }
+
+    uploadedFilePath = filePathFromUploads;
+  }
+
+  // ❌ No file source
+  else {
+    return res.status(400).json({
+      success: false,
+      error: "No file uploaded or filename provided",
+    });
+  }
   const filterOption = req.body.filterOption || "all";
 
   // Verify file exists before processing
@@ -226,60 +247,62 @@ function analyzeFileController(req, res, pyScriptPath, uploadDir, resultsDir) {
   });
 }
 
-// analyze with google
-const getCode = async (req, res) => {
+const getSites = async (req, res) => {
+  const { tokens } = req.body;
+  if (!tokens)
+    return res.status(400).json({ status: "error", message: "Missing tokens" });
+
+  const oauth2Client = new google.auth.OAuth2();
+  oauth2Client.setCredentials(tokens);
+
+  const webmasters = google.webmasters({ version: "v3", auth: oauth2Client });
+
+  try {
+    const response = await webmasters.sites.list();
+    res.json({ status: "success", sites: response.data.siteEntry });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: "error", message: err.message });
+  }
+};
+
+const login = async (req, res) => {
   try {
     const { code } = req.query;
-
     if (!code) {
-      return res.status(400).json({
-        status: "error",
-        message: "No authorization code provided",
-      });
+      return res
+        .status(400)
+        .json({ status: "error", message: "No code provided" });
     }
 
-    console.log("Received code:", code.substring(0, 10) + "...");
-
-    // Verify environment variables
     if (!process.env.G_CLIENT_ID || !process.env.G_CLIENT_SECRET) {
-      return res.status(500).json({
-        status: "error",
-        message: "Missing OAuth credentials in environment variables",
-      });
+      return res
+        .status(500)
+        .json({ status: "error", message: "Missing OAuth credentials" });
     }
 
     const oauth2Client = new google.auth.OAuth2(
       process.env.G_CLIENT_ID,
       process.env.G_CLIENT_SECRET,
-      process.env.G_REDIRECT_URL
+      "http://localhost:3000/success/"
     );
 
-    console.log("Attempting to exchange code for tokens...");
     const { tokens } = await oauth2Client.getToken(code);
-    console.log("Successfully received tokens");
 
-    // Run Python Step 1
+    // Optionally: run Python script if needed
     const pyFile = path.join(
       __dirname,
       "../../service/analyze-with-google/gsc_step1.py"
     );
 
     const py = spawn("python", [pyFile], { stdio: ["pipe", "pipe", "pipe"] });
-
     py.stdin.write(JSON.stringify(tokens));
     py.stdin.end();
 
-    let data = "";
-    let errorData = "";
-
-    py.stdout.on("data", (chunk) => {
-      data += chunk.toString();
-    });
-
-    py.stderr.on("data", (err) => {
-      errorData += err.toString();
-      console.error("Python stderr:", err.toString());
-    });
+    let data = "",
+      errorData = "";
+    py.stdout.on("data", (chunk) => (data += chunk.toString()));
+    py.stderr.on("data", (err) => (errorData += err.toString()));
 
     py.on("close", (exitCode) => {
       if (exitCode !== 0) {
@@ -292,14 +315,9 @@ const getCode = async (req, res) => {
 
       try {
         const pythonResponse = JSON.parse(data);
-
-        return res.json({
-          status: "success",
-          python: pythonResponse,
-          tokens: tokens,
-        });
-      } catch (parseError) {
-        return res.status(500).json({
+        res.json({ status: "success", tokens, python: pythonResponse });
+      } catch {
+        res.status(500).json({
           status: "error",
           message: "Failed to parse Python output",
           details: data,
@@ -307,22 +325,8 @@ const getCode = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error("OAuth error:", error);
-
-    if (error.code === "invalid_grant") {
-      return res.status(400).json({
-        status: "error",
-        message:
-          "Authorization code is invalid or expired. Please authenticate again.",
-        hint: "The code may have already been used or has expired",
-      });
-    }
-
-    res.status(500).json({
-      status: "error",
-      message: error.message || "Failed to exchange authorization code",
-      details: error.response?.data || error.toString(),
-    });
+    console.error(error);
+    res.status(500).json({ status: "error", message: error.message });
   }
 };
 
@@ -330,6 +334,22 @@ const getDataWithGoogle = async (req, res) => {
   try {
     const { url, tokens, start_date, end_date } = req.body;
 
+    // ✅ Validation
+    if (!url || !tokens?.access_token || !tokens?.refresh_token) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required parameters",
+      });
+    }
+
+    if (!start_date || !end_date) {
+      return res.status(400).json({
+        success: false,
+        message: "Start date and end date are required",
+      });
+    }
+
+    // ✅ Prepare input data
     const inputData = JSON.stringify({
       site_url: url,
       access_token: tokens.access_token,
@@ -338,57 +358,189 @@ const getDataWithGoogle = async (req, res) => {
       end_date,
     });
 
+    // ✅ Python file path - استخدم مسار نسبي من جذر المشروع
     const pyFile = path.join(
-      __dirname,
-      "../../service/analyze-with-google/gsc_step2.py"
+      process.cwd(),
+      "src/service/analyze-with-google/gsc_step2.py"
     );
 
-    const py = spawn("python", [pyFile], { stdio: ["pipe", "pipe", "pipe"] });
+    console.log("🔍 Checking Python file at:", pyFile);
+    console.log("📂 Current directory (__dirname):", __dirname);
+    console.log("📁 Process working directory:", process.cwd());
+
+    // ✅ Check if Python file exists - استخدم existsSync بدلاً من async access
+    if (!fs.existsSync(pyFile)) {
+      return res.status(500).json({
+        success: false,
+        message: "Python script not found",
+        path: pyFile,
+        cwd: process.cwd(),
+        __dirname,
+      });
+    }
+
+    console.log("✅ Python file found!");
+
+    // ✅ Spawn Python process
+    const py = spawn("python", [pyFile], {
+      stdio: ["pipe", "pipe", "pipe"],
+      env: { ...process.env, PYTHONIOENCODING: "utf-8" },
+    });
 
     let output = "";
     let errorOutput = "";
+    let jsonOutput = "";
 
+    // ✅ Collect stdout
     py.stdout.on("data", (data) => {
-      output += data.toString();
+      const chunk = data.toString();
+      output += chunk;
+
+      // محاولة استخراج JSON من الناتج
+      const jsonMatch = chunk.match(/\{[\s\S]*"success"[\s\S]*\}/);
+      if (jsonMatch) {
+        jsonOutput = jsonMatch[0];
+      }
     });
 
+    // ✅ Collect stderr
     py.stderr.on("data", (data) => {
       errorOutput += data.toString();
     });
 
+    // ✅ Send input to Python
     py.stdin.write(inputData);
     py.stdin.end();
 
-    py.on("close", (code) => {
-      if (errorOutput) {
+    // ✅ Timeout after 60 seconds
+    const timeout = setTimeout(() => {
+      py.kill();
+      res.status(408).json({
+        success: false,
+        message: "Request timeout - Process took too long",
+      });
+    }, 60000);
+
+    // ✅ Handle process completion
+    py.on("close", async (code) => {
+      clearTimeout(timeout);
+
+      console.log("📊 Python Process Closed:");
+      console.log("Exit Code:", code);
+      console.log("Output Length:", output.length);
+      console.log("Error Output:", errorOutput);
+
+      if (code !== 0) {
         return res.status(500).json({
           success: false,
-          message: "Python script error",
-          details: errorOutput,
+          message: "Python process failed",
+          exitCode: code,
+          error: errorOutput || "Unknown error",
+          output: output.substring(0, 500),
         });
       }
 
       try {
-        const result = JSON.parse(output);
-        res.json(result);
+        // محاولة استخراج JSON من الناتج
+        let result;
+
+        if (jsonOutput) {
+          result = JSON.parse(jsonOutput);
+        } else {
+          // محاولة إيجاد آخر JSON في الناتج
+          const lines = output.split("\n");
+          for (let i = lines.length - 1; i >= 0; i--) {
+            if (lines[i].trim().startsWith("{")) {
+              try {
+                result = JSON.parse(lines[i]);
+                break;
+              } catch (e) {
+                continue;
+              }
+            }
+          }
+        }
+
+        if (!result) {
+          throw new Error("No valid JSON found in output");
+        }
+
+        if (!result.success) {
+          return res.status(400).json(result);
+        }
+
+        // ✅ Check if file was created
+        const filename = result.filename;
+        if (filename) {
+          const filePath = path.join(process.cwd(), filename);
+
+          try {
+            const fileStats = await fsPromises.stat(filePath);
+            result.file = {
+              path: filePath,
+              name: filename,
+              size: fileStats.size,
+              sizeKB: (fileStats.size / 1024).toFixed(2),
+              created: fileStats.birthtime,
+            };
+          } catch (err) {
+            console.warn("⚠️ File not found:", filePath);
+          }
+        }
+
+        // ✅ Return success response
+        res.json({
+          success: true,
+          message: "Data fetched and saved successfully",
+          ...result,
+          logs: output
+            .split("\n")
+            .filter(
+              (line) =>
+                line.includes("✅") ||
+                line.includes("📊") ||
+                line.includes("📁")
+            ),
+        });
       } catch (err) {
+        console.error("❌ Parse Error:", err);
+
         res.status(500).json({
           success: false,
           message: "Failed to parse Python output",
-          details: output,
+          error: err.message,
+          rawOutput: output.substring(0, 1000),
+          errorOutput: errorOutput,
         });
       }
     });
+
+    // ✅ Handle process error
+    py.on("error", (err) => {
+      clearTimeout(timeout);
+      console.error("❌ Python Process Error:", err);
+
+      res.status(500).json({
+        success: false,
+        message: "Failed to start Python process",
+        error: err.message,
+      });
+    });
   } catch (error) {
-    return res.status(500).json({
+    console.error("❌ Controller Error:", error);
+
+    res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Server error",
+      error: error.message,
     });
   }
 };
+
 module.exports = {
   analyzeFileController,
   ensureDir,
-  getCode,
+  getSites,
   getDataWithGoogle,
+  login,
 };

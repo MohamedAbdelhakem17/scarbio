@@ -12,9 +12,6 @@ const HTTP_STATUS_TEXT = require("./libs/constant/http-status.constant");
 const errorMiddlewareHandler = require("./libs/middleware/error-handler.middleware");
 const AppError = require("./libs/utils/app-error");
 const AppRouter = require("./routes");
-const {
-  getCode,
-} = require("./controller/file-analysis-controller/file-analyze.controller");
 
 const app = express();
 const server = http.createServer(app);
@@ -38,7 +35,6 @@ app.use(
 );
 
 // ========== APP ROUTER ==========
-app.use(getCode);
 AppRouter(app);
 
 // ========== ROUTE NOT FOUND ==========

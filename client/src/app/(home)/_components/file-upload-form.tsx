@@ -96,7 +96,7 @@ export default function FileUploadForm() {
           {/* Drag & Drop Zone */}
           <div
             className={cn(
-              'mb-8 mt-5 flex w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-2 transition',
+              'mt-5 flex w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-2 transition',
               isDragging
                 ? 'border-[#8b5a9e] bg-[#8b5a9e]/10'
                 : 'border-[#c9b4d3] bg-white/40'
