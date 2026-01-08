@@ -15,7 +15,7 @@ function Spinner() {
 }
 
 /* ---------------- Success Modal ---------------- */
-function SuccessModal({ open, site, onClose, onAnalyze }) {
+function SuccessModal({ open, site, onClose, onAnalyze }: { open: boolean; site: string | null; onClose: () => void; onAnalyze: () => void }) {
   return (
     <AnimatePresence>
       {open && (
