@@ -7,7 +7,10 @@ const fs = require("fs");
 const {
   analyzeFileController,
   ensureDir,
-} = require("../../controller/file-analysis-controller/file-analysis.controller");
+  login,
+  getSites,
+  getDataWithGoogle,
+} = require("../../controller/file-analysis-controller/file-analyze.controller");
 
 const DEFAULT_UPLOAD_DIR = path.join(process.cwd(), "uploads");
 const DEFAULT_RESULTS_DIR = path.join(process.cwd(), "results");
@@ -47,6 +50,12 @@ function initAnalysisRouter(pyScriptPath) {
     if (!fs.existsSync(full)) return res.status(404).send("File not found");
     res.download(full);
   });
+
+  analysisRouter.get("/oauth/callback", login);
+
+  analysisRouter.post("/sites", getSites);
+
+  analysisRouter.post("/data", getDataWithGoogle);
 
   return analysisRouter;
 }

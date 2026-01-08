@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
 
 interface LoadProps {
-  rows: number;
+  rows?: number;
 }
 
 const brand = {
@@ -34,7 +34,7 @@ export const seoInsights: string[] = [
   'Soft 404 Detection Pages that return status 200 but contain "no results" or "product unavailable" content. Google detects them and treats them as 404s, but you don\'t see them in your reports. Search Console shows them under Coverage.',
 ];
 
-const Load = ({ rows }: LoadProps) => {
+const Load = ({ rows = 15 }: LoadProps) => {
   const [progress, setProgress] = useState(0);
   const [currentRow, setCurrentRow] = useState(0);
   const [insightIndex, setInsightIndex] = useState(0);

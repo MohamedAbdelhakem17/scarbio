@@ -34,8 +34,6 @@ app.use(
   })
 );
 
-const pyScriptPath = require("path").join(__dirname, "../service/analyser.py");
-
 // ========== APP ROUTER ==========
 AppRouter(app);
 
@@ -54,8 +52,8 @@ app.all(/.*/, (req, res, next) => {
 app.use(errorMiddlewareHandler);
 
 // ========== START SERVER ==========
-const PORT = process.env.PORT || 7000;
-server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+// const PORT = process.env.PORT || 7000;
+server.listen(8080, () => console.log(`🚀 Server running on port ${8080}`));
 
 process.on("unhandledRejection", (error) => {
   console.error(`❌ Unhandled Rejection: ${error.name} | ${error.message}`);

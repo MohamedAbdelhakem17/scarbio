@@ -9,6 +9,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
 import { useRowCount } from './../../../hooks/use-row-count';
+import GoogleButton from './google-button';
 
 type DragEventType = React.DragEvent<HTMLDivElement>;
 type ChangeEventType = React.ChangeEvent<HTMLInputElement>;
@@ -95,7 +96,7 @@ export default function FileUploadForm() {
           {/* Drag & Drop Zone */}
           <div
             className={cn(
-              'mb-8 mt-5 flex w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-2 transition',
+              'mt-5 flex w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-2 transition',
               isDragging
                 ? 'border-[#8b5a9e] bg-[#8b5a9e]/10'
                 : 'border-[#c9b4d3] bg-white/40'
@@ -142,16 +143,15 @@ export default function FileUploadForm() {
           <Button
             type='submit'
             disabled={isUploading}
-            // className={cn(
-            //   'mt-10 flex items-center gap-2 rounded-full bg-[#8b5a9e] px-10 py-4 text-xl text-white shadow-lg transition hover:bg-[#734983]',
-            //   isUploading && 'cursor-not-allowed opacity-70'
-            // )}
             className='mt-3 md:mt-10'
           >
             Analyze
             <ChevronRight className='ms-2 inline-block size-9 transition-transform duration-300' />
           </Button>
         </div>
+
+        {/* analyze with data */}
+        <GoogleButton />
       </form>
 
       {isUploading && <Load rows={rowCount} />}
