@@ -13,13 +13,18 @@ export const fileUploadAction = async (data: FormData) => {
 
     if (!response.ok) {
       return {
+        success: false,
         status: 'error',
-        message: response,
+        message: payload?.message || response.statusText || 'Upload failed',
       };
     }
 
     return payload;
   } catch (err: any) {
-    return err;
+    return {
+      success: false,
+      status: 'error',
+      message: err.message || 'An unexpected error occurred',
+    };
   }
 };

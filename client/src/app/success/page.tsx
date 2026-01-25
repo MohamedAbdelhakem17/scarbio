@@ -1,21 +1,26 @@
 'use client';
 
 import Load from '@/components/feature/file-scan-loading';
+import GlassLoader from '@/components/feature/glass-loader';
+import { analysisAction } from '@/lib/actions/analysis.action';
+import { getCodeAction } from '@/lib/actions/get-code.action';
+import { getSitesAction } from '@/lib/actions/get-sites.action';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-/* ---------------- Spinner ---------------- */
-function Spinner() {
-  return (
-    <div className='flex items-center justify-center py-10'>
-      <div className='h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent' />
-    </div>
-  );
-}
-
 /* ---------------- Success Modal ---------------- */
-function SuccessModal({ open, site, onClose, onAnalyze }: { open: boolean; site: string | null; onClose: () => void; onAnalyze: () => void }) {
+function SuccessModal({
+  open,
+  site,
+  onClose,
+  onAnalyze,
+}: {
+  open: boolean;
+  site: string | null;
+  onClose: () => void;
+  onAnalyze: () => void;
+}) {
   return (
     <AnimatePresence>
       {open && (
@@ -98,25 +103,15 @@ export default function SuccessPage() {
 
     const fetchData = async () => {
       try {
-        const res = await fetch(
-          `http://localhost:8080/api/v1/analysis/oauth/callback?code=${code}`
-        );
-        const data = await res.json();
+        // Token
+        const data = await getCodeAction(code);
 
         if (data.status !== 'success') return;
 
         setTokens(data.tokens);
 
-        const resSites = await fetch(
-          'http://localhost:8080/api/v1/analysis/sites',
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tokens: data.tokens }),
-          }
-        );
-
-        const sitesData = await resSites.json();
+        // Sites
+        const sitesData = await getSitesAction(data.tokens);
 
         if (sitesData.status === 'success') {
           setSites(sitesData.sites);
@@ -136,18 +131,12 @@ export default function SuccessPage() {
     setLoadingUrl(url);
 
     try {
-      const res = await fetch('http://localhost:8080/api/v1/analysis/data', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          url,
-          tokens,
-          start_date: '2025-11-01',
-          end_date: '2025-11-30',
-        }),
+      const data = await analysisAction({
+        url,
+        tokens,
+        start_date: '2025-11-01',
+        end_date: '2025-11-30',
       });
-
-      const data = await res.json();
 
       if (data.success) {
         setAnalyzedSites(prev => ({ ...prev, [url]: true }));
@@ -172,21 +161,9 @@ export default function SuccessPage() {
     setIsUploading(true);
 
     try {
-      // ✅ عمل fetch مباشر بدون استخدام أي فانكشن خارجي
-      const response = await fetch(
-        'http://localhost:8080/api/v1/analysis/analyze-file',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ filename }), // لازم يكون object عشان backend يستقبل JSON
-        }
-      );
+      const data = await analysisAction({ filename, action: 'analyze' });
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
+      if (data.success) {
         sessionStorage.setItem('analysisResult', JSON.stringify(data));
         router.push('/result');
       } else {
@@ -200,7 +177,7 @@ export default function SuccessPage() {
   };
 
   /* -------- States -------- */
-  if (loadingSites) return <Spinner />;
+  if (loadingSites) return <GlassLoader />;
 
   if (!code) {
     return <p className='text-center'>Not logged in yet</p>;
