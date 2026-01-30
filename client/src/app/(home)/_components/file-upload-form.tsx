@@ -94,16 +94,26 @@ export default function FileUploadForm() {
     <>
       <form
         onSubmit={handleSubmit}
-        className='w-[320px] rounded-3xl bg-white/40 p-4 shadow-2xl backdrop-blur-xl md:w-[420px] md:p-10'
+        className='w-[300px] rounded-3xl bg-[#f5e6f0] p-6 shadow-2xl md:w-[460px] md:p-8'
       >
-        <div className='flex flex-col items-center text-center'>
+        <div className='flex flex-col items-center'>
+          {/* Google Button */}
+          <GoogleButton />
+
+          {/* Divider with "Or" */}
+          <div className='my-3 flex w-full items-center gap-4'>
+            <div className='h-[2px] flex-1 bg-brand-soft'></div>
+            <span className='text-lg font-medium text-brand-dark'>Or</span>
+            <div className='h-[2px] flex-1 bg-brand-soft'></div>
+          </div>
+
           {/* Drag & Drop Zone */}
           <div
             className={cn(
-              'mt-5 flex w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-2 transition',
+              'flex w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-[3px] border-dashed p-8 transition-all',
               isDragging
-                ? 'border-[#8b5a9e] bg-[#8b5a9e]/10'
-                : 'border-[#c9b4d3] bg-white/40'
+                ? 'border-[#8b5a9e] bg-white/60'
+                : 'border-[#d4b5d4] bg-white/40'
             )}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -112,15 +122,17 @@ export default function FileUploadForm() {
           >
             <Image
               src='/assets/images/upload.png'
-              alt='Scarbio'
-              width={150}
+              alt='Upload'
+              width={100}
               height={100}
-              className='object-contain p-2'
+              className='mb-4 object-contain'
             />
-            <p className='mt-4 text-lg font-medium text-[#6f3a83]'>
+            <p className='text-center text-base font-medium text-[#8b5a9e]'>
               Drag & Drop your files here
             </p>
-            <p className='text-sm text-[#6f3a83]/70'>or click to browse</p>
+            <p className='mt-1 text-center text-sm text-[#8b5a9e]/70'>
+              or click to browse
+            </p>
           </div>
 
           {/* Hidden File Input */}
@@ -134,7 +146,7 @@ export default function FileUploadForm() {
 
           {/* File Preview */}
           {file && (
-            <div className='mt-4 w-full rounded-xl bg-white/60 p-4 text-left text-[#6f3a83] shadow'>
+            <div className='mt-4 w-full rounded-xl bg-white/80 p-4 text-left text-[#6f3a83] shadow-sm'>
               <p className='font-semibold'>Selected File:</p>
               <p className='truncate text-sm'>{file.name}</p>
               <p className='text-xs opacity-70'>
@@ -145,7 +157,7 @@ export default function FileUploadForm() {
 
           {/* Analysis Options - Radio Buttons */}
           {file && (
-            <div className='mt-3 w-full rounded-xl bg-white/60 p-3 text-left text-[#6f3a83] shadow'>
+            <div className='mt-3 w-full rounded-xl bg-white/80 p-3 text-left text-[#6f3a83] shadow-sm'>
               <p className='mb-2 text-sm font-semibold'>Analysis Options:</p>
               <div className='space-y-1.5'>
                 <label className='flex cursor-pointer items-start'>
@@ -187,15 +199,12 @@ export default function FileUploadForm() {
           <Button
             type='submit'
             disabled={isUploading}
-            className='mt-3 md:mt-10'
+            className='mt-6 w-full rounded-full bg-[#9b7da8] px-8 py-6 text-base font-medium text-white hover:bg-[#8b5a9e] disabled:opacity-50 md:w-auto'
           >
             Analyze
-            <ChevronRight className='ms-2 inline-block size-9 transition-transform duration-300' />
+            <ChevronRight className='ms-2 inline-block size-5' />
           </Button>
         </div>
-
-        {/* analyze with data */}
-        <GoogleButton />
       </form>
 
       {isUploading && <Load rows={rowCount} />}

@@ -6,11 +6,13 @@ interface AnalysisParams {
   start_date?: string;
   end_date?: string;
   filename?: string;
+  filterOption?: 'recommended' | 'all';
   action?: 'create' | 'analyze';
 }
 
 export const analysisAction = async (params: AnalysisParams) => {
-  const { url, tokens, start_date, end_date, filename, action } = params;
+  const { url, tokens, start_date, end_date, filename, filterOption, action } =
+    params;
 
   const baseUrl = process.env.API_URL?.replace(/\/$/, '') || '';
 
@@ -28,7 +30,7 @@ export const analysisAction = async (params: AnalysisParams) => {
       const response = await fetch(`${baseUrl}/api/v1/analysis/analyze-file`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename }),
+        body: JSON.stringify({ filename, filterOption: filterOption || 'all' }),
       });
 
       const data = await response.json();
