@@ -8,7 +8,8 @@ export const getCodeAction = async (code: string) => {
     };
   }
 
-  const baseUrl = process.env.API_URL?.replace(/\/$/, '') || '';
+  const baseUrl =
+    process.env.API_URL?.replace(/\/$/, '') || 'https://api.scarabio.com';
 
   try {
     const response = await fetch(
