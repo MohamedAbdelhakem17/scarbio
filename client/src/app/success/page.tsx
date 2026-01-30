@@ -117,7 +117,7 @@ export default function SuccessPage() {
           setSites(sitesData.sites);
         }
       } catch (err) {
-        console.error(err);
+        // Error fetching data
       }
     };
 
@@ -157,7 +157,7 @@ export default function SuccessPage() {
         setModalOpen(true);
       }
     } catch (err) {
-      console.error(err);
+      // Error during analysis
     } finally {
       setLoadingUrl(null);
     }

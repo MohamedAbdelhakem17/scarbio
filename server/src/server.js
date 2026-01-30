@@ -20,15 +20,13 @@ const server = http.createServer(app);
 
 app.use(express.json());
 
+const corsOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(",")
+  : ["http://localhost:3000"];
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:7000",
-      "http://localhost:3000",
-      "http://127.0.0.1:5500",
-      "http://127.0.0.1:5501",
-      "https://scarabio.com",
-    ],
+    origin: corsOrigins,
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   }),
@@ -53,9 +51,10 @@ app.use(errorMiddlewareHandler);
 
 // ========== START SERVER ==========
 const PORT = process.env.PORT || 7000;
-server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+server.listen(PORT, () => {
+  // Server started successfully
+});
 
 process.on("unhandledRejection", (error) => {
-  console.error(`❌ Unhandled Rejection: ${error.name} | ${error.message}`);
   server.close(() => process.exit(1));
 });

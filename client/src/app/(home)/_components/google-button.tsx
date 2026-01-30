@@ -18,54 +18,33 @@ export default function GoogleLogin() {
       const searchParams = new URLSearchParams(window.location.search);
       const code = searchParams.get('code');
 
-      console.log('[GOOGLE-BUTTON] Checking for OAuth code...');
-      console.log('[GOOGLE-BUTTON] Code found:', code);
-
       if (code) {
-        console.log('[GOOGLE-BUTTON] Starting OAuth flow...');
         setIsLoading(true);
         try {
           // Get tokens
-          console.log('[GOOGLE-BUTTON] Getting tokens from code...');
           const data = await getCodeAction(code);
-          console.log('[GOOGLE-BUTTON] Token response:', data);
 
           if (data.status === 'success' && data.tokens) {
-            console.log('[GOOGLE-BUTTON] ✅ Tokens received');
             setTokens(data.tokens);
 
             // Get sites
-            console.log('[GOOGLE-BUTTON] Fetching sites...');
             const sitesData = await getSitesAction(data.tokens);
-            console.log('[GOOGLE-BUTTON] Sites response:', sitesData);
 
             if (sitesData.status === 'success' && sitesData.sites) {
-              console.log(
-                '[GOOGLE-BUTTON] ✅ Sites received:',
-                sitesData.sites.length,
-                'sites'
-              );
               setSites(sitesData.sites);
               setIsModalOpen(true);
 
               // Clean URL
               window.history.replaceState({}, '', '/');
             } else {
-              console.error(
-                '[GOOGLE-BUTTON] ❌ Failed to get sites:',
-                sitesData
-              );
               alert('Failed to fetch sites from Google Search Console');
             }
           } else {
-            console.error('[GOOGLE-BUTTON] ❌ Failed to get tokens:', data);
             alert('Failed to authenticate with Google');
           }
         } catch (err) {
-          console.error('[GOOGLE-BUTTON] ❌ Exception:', err);
           alert('Failed to connect to Google Search Console');
         } finally {
-          console.log('[GOOGLE-BUTTON] Finished OAuth flow');
           setIsLoading(false);
         }
       }
@@ -75,12 +54,6 @@ export default function GoogleLogin() {
   }, []);
 
   const login = () => {
-    console.log('[GOOGLE-BUTTON] Login button clicked');
-    console.log(
-      '[GOOGLE-BUTTON] Redirect URI:',
-      process.env.NEXT_PUBLIC_REDIRECT_URI
-    );
-
     const params = {
       client_id:
         '816118067676-0ril5bauojsupkedd6jgok9t90628ts3.apps.googleusercontent.com',
@@ -98,18 +71,10 @@ export default function GoogleLogin() {
       'https://accounts.google.com/o/oauth2/v2/auth?' +
       new URLSearchParams(params).toString();
 
-    console.log('[GOOGLE-BUTTON] Redirecting to:', url);
     window.location.href = url;
   };
 
-  console.log(
-    '[GOOGLE-BUTTON] Current state - sites:',
-    sites.length,
-    'isModalOpen:',
-    isModalOpen,
-    'isLoading:',
-    isLoading
-  );
+  return isLoading;
 
   return (
     <>

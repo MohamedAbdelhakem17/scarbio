@@ -43,7 +43,6 @@ export default function GoogleAnalysisModal({
     jobId,
     interval: 60000, // Poll every 1 minute
     onCompleted: result => {
-      console.log('[GOOGLE-MODAL] ✅ Analysis completed!', result);
       setIsAnalyzing(false);
       setJobId(null);
 
@@ -53,24 +52,17 @@ export default function GoogleAnalysisModal({
       onClose();
     },
     onFailed: error => {
-      console.error('[GOOGLE-MODAL] ❌ Analysis failed:', error);
       setIsAnalyzing(false);
       setJobId(null);
       alert('Analysis failed: ' + (error?.message || error || 'Unknown error'));
     },
   });
 
-  console.log('[GOOGLE-MODAL] Current jobStatus:', jobStatus);
-  console.log('[GOOGLE-MODAL] Current jobId:', jobId);
-
   // Fetch data from Google Search Console
   const handleSiteSelect = async (siteUrl: string) => {
     if (!siteUrl) {
-      console.log('[GOOGLE-MODAL] No siteUrl provided');
       return;
     }
-
-    console.log('[GOOGLE-MODAL] Site selected:', siteUrl);
     setSelectedSite(siteUrl);
     setLoadingSite(siteUrl);
     setFilename(null);
@@ -88,14 +80,6 @@ export default function GoogleAnalysisModal({
         return `${year}-${month}-${day}`;
       };
 
-      console.log(
-        '[GOOGLE-MODAL] Fetching data from:',
-        formatDate(startDate),
-        'to',
-        formatDate(endDate)
-      );
-      console.log('[GOOGLE-MODAL] Calling analysisAction...');
-
       const data = await analysisAction({
         url: siteUrl,
         tokens,
@@ -103,30 +87,17 @@ export default function GoogleAnalysisModal({
         end_date: formatDate(endDate),
       });
 
-      console.log('[GOOGLE-MODAL] Data received:', data);
-
       if (data.success && data.filename) {
-        console.log(
-          '[GOOGLE-MODAL] ✅ Data fetched successfully, filename:',
-          data.filename
-        );
-        console.log(
-          '[GOOGLE-MODAL] Row count:',
-          data.rowCount || data.count || 0
-        );
         setFilename(data.filename);
         setRowCount(data.rowCount || data.count || 0);
       } else {
-        console.error('[GOOGLE-MODAL] ❌ Failed to fetch data:', data);
         alert('Failed to fetch data: ' + (data.message || 'Unknown error'));
         setSelectedSite(null);
       }
     } catch (err: any) {
-      console.error('[GOOGLE-MODAL] ❌ Exception caught:', err);
       alert('Error: ' + err.message);
       setSelectedSite(null);
     } finally {
-      console.log('[GOOGLE-MODAL] Finished loading site data');
       setLoadingSite(null);
     }
   };
@@ -134,47 +105,32 @@ export default function GoogleAnalysisModal({
   // Analyze the file
   const handleAnalyze = async () => {
     if (!filename) {
-      console.log('[GOOGLE-MODAL] No filename, cannot analyze');
       return;
     }
 
-    console.log('[GOOGLE-MODAL] Starting analysis for:', filename);
-    console.log('[GOOGLE-MODAL] Filter option:', analysisOption);
     setIsAnalyzing(true);
 
     try {
-      console.log(
-        '[GOOGLE-MODAL] Calling analysisAction with action=analyze...'
-      );
       const response = await analysisAction({
         filename,
         filterOption: analysisOption,
         action: 'analyze',
       });
 
-      console.log('[GOOGLE-MODAL] Analysis response:', response);
-
       if (response.success && response.jobId) {
         // New behavior: Set jobId to start polling
-        console.log(
-          '[GOOGLE-MODAL] Starting polling with jobId:',
-          response.jobId
-        );
         setJobId(response.jobId);
       } else if (response.success) {
         // Legacy behavior: Direct response (for backward compatibility)
-        console.log('[GOOGLE-MODAL] Legacy response, navigating to results');
         sessionStorage.setItem('analysisResult', JSON.stringify(response));
         router.push('/result');
         onClose();
         setIsAnalyzing(false);
       } else {
-        console.error('[GOOGLE-MODAL] Error response:', response);
         alert('Error: ' + (response.message || 'Analysis failed'));
         setIsAnalyzing(false);
       }
     } catch (err: any) {
-      console.error('[GOOGLE-MODAL] ❌ Exception caught:', err);
       alert('Analysis failed: ' + err.message);
       setIsAnalyzing(false);
     }

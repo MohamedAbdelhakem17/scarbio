@@ -20,7 +20,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Error in get-code route:', error);
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(

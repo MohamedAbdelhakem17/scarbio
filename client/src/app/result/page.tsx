@@ -41,7 +41,7 @@ export default function ResultPage() {
         <div className='mt-6 flex justify-center'>
           <button className='custom-glass-shadow rounded-2xl bg-white/10 px-10 py-3 font-semibold text-white backdrop-blur-[10px] transition-all hover:bg-white/20'>
             <a
-              href={`https://api.scarabio.com${result.downloadUrl}`}
+              href={`${process.env.NEXT_PUBLIC_API_URL || process.env.API_URL}${result.downloadUrl}`}
               target='_blank'
               rel='noopener noreferrer'
               className='flex h-full w-full items-center gap-x-3'

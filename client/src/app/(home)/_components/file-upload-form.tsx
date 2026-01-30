@@ -39,7 +39,6 @@ export default function FileUploadForm() {
     jobId,
     interval: 60000, // Poll every 1 minute
     onCompleted: result => {
-      console.log('[FILE-UPLOAD] ✅ Analysis completed!', result);
       setIsUploading(false);
       setJobId(null);
 
@@ -48,15 +47,11 @@ export default function FileUploadForm() {
       router.push('/result');
     },
     onFailed: error => {
-      console.error('[FILE-UPLOAD] ❌ Analysis failed:', error);
       setIsUploading(false);
       setJobId(null);
       alert('Analysis failed: ' + (error?.message || error || 'Unknown error'));
     },
   });
-
-  console.log('[FILE-UPLOAD] Current jobStatus:', jobStatus);
-  console.log('[FILE-UPLOAD] Current jobId:', jobId);
 
   // Drag & Drop Handlers
   const handleDragOver = (e: DragEventType) => {
@@ -87,8 +82,6 @@ export default function FileUploadForm() {
     e.preventDefault();
     if (!file) return alert('Please select a file first!');
 
-    console.log('[FILE-UPLOAD] Form submitted with file:', file.name);
-
     const ext = file.name.toLowerCase();
     const type = ext.endsWith('.csv') ? 'csv' : 'excel';
 
@@ -101,30 +94,21 @@ export default function FileUploadForm() {
     setIsUploading(true);
 
     try {
-      console.log('[FILE-UPLOAD] Calling fileUploadAction...');
       const response = await fileUploadAction(formData);
-      console.log('[FILE-UPLOAD] Response received:', response);
 
       if (response.success && response.jobId) {
         // New behavior: Set jobId to start polling
-        console.log(
-          '[FILE-UPLOAD] Starting polling with jobId:',
-          response.jobId
-        );
         setJobId(response.jobId);
       } else if (response.success) {
         // Legacy behavior: Direct response (for backward compatibility)
-        console.log('[FILE-UPLOAD] Legacy response, navigating to results');
         sessionStorage.setItem('analysisResult', JSON.stringify(response));
         router.push('/result');
         setIsUploading(false);
       } else {
-        console.error('[FILE-UPLOAD] Error response:', response);
         alert('Error: ' + response.message);
         setIsUploading(false);
       }
     } catch (err: any) {
-      console.error('[FILE-UPLOAD] Exception caught:', err);
       alert('Upload failed: ' + err.message);
       setIsUploading(false);
     }
@@ -239,12 +223,6 @@ export default function FileUploadForm() {
           <Button
             type='submit'
             disabled={isUploading}
-            onClick={() => {
-              console.log('[FILE-UPLOAD] Analyze button clicked');
-              console.log('[FILE-UPLOAD] isUploading:', isUploading);
-              console.log('[FILE-UPLOAD] file:', file);
-              console.log('[FILE-UPLOAD] analysisOption:', analysisOption);
-            }}
             className='mt-6 w-full rounded-full bg-[#9b7da8] px-8 py-6 text-base font-medium text-white hover:bg-[#8b5a9e] disabled:opacity-50 md:w-auto'
           >
             Analyze
