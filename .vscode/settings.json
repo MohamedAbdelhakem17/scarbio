@@ -4,5 +4,6 @@
     "googleapiclient",
     "searchanalytics",
     "searchconsole"
-  ]
+  ],
+  "i18n-ally.localesPaths": []
 }

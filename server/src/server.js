@@ -16,7 +16,7 @@ const AppRouter = require("./routes");
 const app = express();
 const server = http.createServer(app);
 
-databaseConnect();
+// databaseConnect();
 
 app.use(express.json());
 
@@ -31,7 +31,7 @@ app.use(
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
-  })
+  }),
 );
 
 // ========== APP ROUTER ==========
@@ -43,8 +43,8 @@ app.all(/.*/, (req, res, next) => {
     new AppError(
       404,
       HTTP_STATUS_TEXT.ERROR,
-      `This route ${req.originalUrl} not found.`
-    )
+      `This route ${req.originalUrl} not found.`,
+    ),
   );
 });
 
@@ -52,8 +52,8 @@ app.all(/.*/, (req, res, next) => {
 app.use(errorMiddlewareHandler);
 
 // ========== START SERVER ==========
-// const PORT = process.env.PORT || 7000;
-server.listen(8080, () => console.log(`🚀 Server running on port ${8080}`));
+const PORT = process.env.PORT || 7000;
+server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 
 process.on("unhandledRejection", (error) => {
   console.error(`❌ Unhandled Rejection: ${error.name} | ${error.message}`);
