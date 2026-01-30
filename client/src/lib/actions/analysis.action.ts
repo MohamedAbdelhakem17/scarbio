@@ -35,17 +35,28 @@ export const checkJobStatus = async (
   const baseUrl =
     process.env.API_URL?.replace(/\/$/, '') || 'https://api.scarabio.com';
 
+  console.log('[ACTION] checkJobStatus called with jobId:', jobId);
+  console.log('[ACTION] API URL:', baseUrl);
+
   try {
-    const response = await fetch(`${baseUrl}/api/v1/analysis/job/${jobId}`, {
+    const url = `${baseUrl}/api/v1/analysis/job/${jobId}`;
+    console.log('[ACTION] Fetching:', url);
+
+    const response = await fetch(url, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       cache: 'no-store', // Disable caching for polling
     });
 
+    console.log('[ACTION] Response status:', response.status);
+    console.log('[ACTION] Response ok:', response.ok);
+
     const data = await response.json();
+    console.log('[ACTION] Response data:', data);
+    
     return data;
   } catch (error) {
-    console.error('Error checking job status:', error);
+    console.error('[ACTION] ❌ Error checking job status:', error);
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error';
     return {
