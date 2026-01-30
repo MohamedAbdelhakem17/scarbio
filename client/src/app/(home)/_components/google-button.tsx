@@ -54,8 +54,7 @@ export default function GoogleLogin() {
     const params = {
       client_id:
         '816118067676-0ril5bauojsupkedd6jgok9t90628ts3.apps.googleusercontent.com',
-      redirect_uri:
-        process.env.NEXT_PUBLIC_REDIRECT_URI || 'http://localhost:3000/',
+      redirect_uri: process.env.NEXT_PUBLIC_REDIRECT_URI as string,
       response_type: 'code',
       access_type: 'offline',
       prompt: 'consent',
