@@ -10,6 +10,7 @@ export const getSitesAction = async (tokens: any) => {
 
   const baseUrl = process.env.API_URL?.replace(/\/$/, '') || '';
 
+  console.log('Fetching sites with tokens:', baseUrl);
   try {
     const response = await fetch(`${baseUrl}/api/v1/analysis/sites`, {
       method: 'POST',
