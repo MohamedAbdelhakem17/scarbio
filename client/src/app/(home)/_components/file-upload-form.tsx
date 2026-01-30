@@ -23,6 +23,9 @@ export default function FileUploadForm() {
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [analysisOption, setAnalysisOption] = useState<'recommended' | 'all'>(
+    'recommended'
+  );
   // const [rowCount, setRowCount] = useState(10);
   const { rowCount, calculateRows } = useRowCount();
 
@@ -65,6 +68,7 @@ export default function FileUploadForm() {
 
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('filterOption', analysisOption);
 
     setIsUploading(true);
 
@@ -136,6 +140,46 @@ export default function FileUploadForm() {
               <p className='text-xs opacity-70'>
                 {(file.size / 1024).toFixed(1)} KB
               </p>
+            </div>
+          )}
+
+          {/* Analysis Options - Radio Buttons */}
+          {file && (
+            <div className='mt-3 w-full rounded-xl bg-white/60 p-3 text-left text-[#6f3a83] shadow'>
+              <p className='mb-2 text-sm font-semibold'>Analysis Options:</p>
+              <div className='space-y-1.5'>
+                <label className='flex cursor-pointer items-start'>
+                  <input
+                    type='radio'
+                    name='analysisOption'
+                    value='recommended'
+                    checked={analysisOption === 'recommended'}
+                    onChange={() => setAnalysisOption('recommended')}
+                    className='mr-2 mt-0.5 cursor-pointer accent-[#8b5a9e]'
+                  />
+                  <div>
+                    <span className='text-sm font-medium'>
+                      Recommended: Position 5-20 only
+                    </span>
+                    <span className='block text-xs opacity-70'>(Best ROI)</span>
+                  </div>
+                </label>
+                <label className='flex cursor-pointer items-start'>
+                  <input
+                    type='radio'
+                    name='analysisOption'
+                    value='all'
+                    checked={analysisOption === 'all'}
+                    onChange={() => setAnalysisOption('all')}
+                    className='mr-2 mt-0.5 cursor-pointer accent-[#8b5a9e]'
+                  />
+                  <div>
+                    <span className='text-sm font-medium'>
+                      All: Analyze all keywords
+                    </span>
+                  </div>
+                </label>
+              </div>
             </div>
           )}
 

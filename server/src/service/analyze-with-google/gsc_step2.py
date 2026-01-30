@@ -13,7 +13,7 @@ def get_gsc_data(service, site_url, start_date, end_date):
         "startDate": start_date,
         "endDate": end_date,
         "dimensions": ["page", "query"],
-        "rowLimit": 25000
+        "rowLimit": 10000
     }
 
     response = service.searchanalytics().query(
