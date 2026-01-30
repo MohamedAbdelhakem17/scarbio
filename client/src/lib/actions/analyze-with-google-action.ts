@@ -1,7 +1,7 @@
 'use server';
 
 export const analyzeWithGoogleAction = async (filename: string) => {
-  const apiUrl = process.env.API_URL;
+  const apiUrl = process.env.API_URL || 'https://api.scarabio.com';
 
   try {
     const response = await fetch(`${apiUrl}/api/v1/analysis/analyze-file`, {

@@ -32,7 +32,8 @@ interface JobStatusResponse {
 export const checkJobStatus = async (
   jobId: string
 ): Promise<JobStatusResponse> => {
-  const baseUrl = process.env.API_URL?.replace(/\/$/, '') || '';
+  const baseUrl =
+    process.env.API_URL?.replace(/\/$/, '') || 'https://api.scarabio.com';
 
   try {
     const response = await fetch(`${baseUrl}/api/v1/analysis/job/${jobId}`, {
@@ -59,7 +60,8 @@ export const analysisAction = async (params: AnalysisParams) => {
   const { url, tokens, start_date, end_date, filename, filterOption, action } =
     params;
 
-  const baseUrl = process.env.API_URL?.replace(/\/$/, '') || '';
+  const baseUrl =
+    process.env.API_URL?.replace(/\/$/, '') || 'https://api.scarabio.com';
 
   try {
     // Handle different actions: 'create' for site analysis, 'analyze' for file analysis

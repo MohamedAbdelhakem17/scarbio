@@ -8,7 +8,8 @@ export const getSitesAction = async (tokens: any) => {
     };
   }
 
-  const baseUrl = process.env.API_URL?.replace(/\/$/, '') || '';
+  const baseUrl =
+    process.env.API_URL?.replace(/\/$/, '') || 'https://api.scarabio.com';
 
   console.log('Fetching sites with tokens:', baseUrl);
   try {

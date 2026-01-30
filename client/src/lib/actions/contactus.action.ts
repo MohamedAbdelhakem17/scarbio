@@ -7,7 +7,7 @@ export const contactUsAction = async (
   data: ContactUsType
 ): Promise<contactUsResponse> => {
   // API link
-  const apiUrl = process.env.API_URL;
+  const apiUrl = process.env.API_URL || 'https://api.scarabio.com';
 
   try {
     // Call Api
