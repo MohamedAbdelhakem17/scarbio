@@ -73,7 +73,7 @@ const Load = ({ rows = 15 }: LoadProps) => {
   useEffect(() => {
     const interval = setInterval(() => {
       setInsightIndex(prev => (prev + 1) % seoInsights.length);
-    }, 5000);
+    }, 15000);
 
     return () => clearInterval(interval);
   }, []);
@@ -84,7 +84,7 @@ const Load = ({ rows = 15 }: LoadProps) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className='fixed inset-0 z-50 flex items-center justify-center'
+        className='fixed inset-0 z-[5000] flex items-center justify-center'
       >
         <div className='absolute inset-0 bg-black/40 backdrop-blur-sm' />
 
@@ -249,6 +249,33 @@ const Load = ({ rows = 15 }: LoadProps) => {
               >
                 Please wait while processing completes...
               </p>
+
+              {/* Warning Message */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.5 }}
+                className='mt-4 rounded-xl border-2 p-4'
+                style={{
+                  borderColor: brand.soft,
+                  backgroundColor: 'rgba(255, 243, 224, 0.5)',
+                }}
+              >
+                <p
+                  className='text-center text-sm font-semibold'
+                  style={{ color: brand.dark }}
+                >
+                  ⚠️ Important: Do not close or refresh this page
+                </p>
+                <p
+                  className='mt-1 text-center text-xs'
+                  style={{ color: brand.medium }}
+                >
+                  Your analysis is running in the background. Closing this page
+                  will not stop the process, but you may lose access to the
+                  results.
+                </p>
+              </motion.div>
             </div>
 
             {/* SEO Insights */}

@@ -10,6 +10,51 @@ interface AnalysisParams {
   action?: 'create' | 'analyze';
 }
 
+interface JobStatusResponse {
+  success: boolean;
+  jobId?: string;
+  status?: 'processing' | 'completed' | 'failed';
+  progress?: number;
+  message?: string;
+  error?: any;
+  // Result fields when completed
+  downloadUrl?: string;
+  excelFile?: string;
+  dataSource?: string;
+  summary?: any;
+  onpageResults?: any[];
+  keywordMapping?: any[];
+}
+
+/**
+ * Check job status by jobId
+ */
+export const checkJobStatus = async (
+  jobId: string
+): Promise<JobStatusResponse> => {
+  const baseUrl = process.env.API_URL?.replace(/\/$/, '') || '';
+
+  try {
+    const response = await fetch(`${baseUrl}/api/v1/analysis/job/${jobId}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      cache: 'no-store', // Disable caching for polling
+    });
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error checking job status:', error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+    return {
+      success: false,
+      message: 'Failed to check job status',
+      error: errorMessage,
+    };
+  }
+};
+
 export const analysisAction = async (params: AnalysisParams) => {
   const { url, tokens, start_date, end_date, filename, filterOption, action } =
     params;

@@ -6,6 +6,7 @@ const fs = require("fs");
 
 const {
   analyzeFileController,
+  getJobStatus,
   ensureDir,
   login,
   getSites,
@@ -27,7 +28,7 @@ function initAnalysisRouter(pyScriptPath) {
       const unique = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       cb(
         null,
-        `${unique}-${file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_")}`
+        `${unique}-${file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_")}`,
       );
     },
   });
@@ -40,9 +41,12 @@ function initAnalysisRouter(pyScriptPath) {
       res,
       pyScriptPath,
       DEFAULT_UPLOAD_DIR,
-      DEFAULT_RESULTS_DIR
+      DEFAULT_RESULTS_DIR,
     );
   });
+
+  // New endpoint to check job status
+  analysisRouter.get("/job/:jobId", getJobStatus);
 
   analysisRouter.get("/download/:filename", (req, res) => {
     const filename = req.params.filename;

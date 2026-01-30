@@ -2,6 +2,7 @@
 
 import Load from '@/components/feature/file-scan-loading';
 import { Button } from '@/components/ui/button';
+import { useJobPolling } from '@/hooks/use-job-polling';
 import { analysisAction } from '@/lib/actions/analysis.action';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
@@ -35,6 +36,27 @@ export default function GoogleAnalysisModal({
     'recommended'
   );
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [jobId, setJobId] = useState<string | null>(null);
+
+  // Job polling hook
+  const jobStatus = useJobPolling({
+    jobId,
+    interval: 60000, // Poll every 1 minute
+    onCompleted: result => {
+      setIsAnalyzing(false);
+      setJobId(null);
+
+      // Store result and navigate to result page
+      sessionStorage.setItem('analysisResult', JSON.stringify(result));
+      router.push('/result');
+      onClose();
+    },
+    onFailed: error => {
+      setIsAnalyzing(false);
+      setJobId(null);
+      alert('Analysis failed: ' + (error?.message || error || 'Unknown error'));
+    },
+  });
 
   // Fetch data from Google Search Console
   const handleSiteSelect = async (siteUrl: string) => {
@@ -92,16 +114,21 @@ export default function GoogleAnalysisModal({
         action: 'analyze',
       });
 
-      if (response.success) {
+      if (response.success && response.jobId) {
+        // New behavior: Set jobId to start polling
+        setJobId(response.jobId);
+      } else if (response.success) {
+        // Legacy behavior: Direct response (for backward compatibility)
         sessionStorage.setItem('analysisResult', JSON.stringify(response));
         router.push('/result');
         onClose();
+        setIsAnalyzing(false);
       } else {
         alert('Error: ' + (response.message || 'Analysis failed'));
+        setIsAnalyzing(false);
       }
     } catch (err: any) {
       alert('Analysis failed: ' + err.message);
-    } finally {
       setIsAnalyzing(false);
     }
   };

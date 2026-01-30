@@ -2,6 +2,8 @@ const { spawn } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 const { google } = require("googleapis");
+const crypto = require("crypto");
+const jobManager = require("../../libs/utils/job-manager");
 
 function ensureDir(dir) {
   if (!fs.existsSync(dir)) {
@@ -9,6 +11,165 @@ function ensureDir(dir) {
   }
 }
 
+/**
+ * Generate unique job ID
+ */
+function generateJobId() {
+  return `job_${Date.now()}_${crypto.randomBytes(8).toString("hex")}`;
+}
+
+/**
+ * Background job processor for file analysis
+ */
+function processAnalysisJob(
+  jobId,
+  uploadedFilePath,
+  filterOption,
+  pyScriptPath,
+  resultsDir,
+) {
+  const python = spawn("python", [
+    pyScriptPath,
+    uploadedFilePath,
+    filterOption,
+    resultsDir,
+  ]);
+
+  let stdoutData = "";
+  let stderrData = "";
+
+  python.stdout.on("data", (data) => {
+    stdoutData += data.toString();
+  });
+
+  python.stderr.on("data", (data) => {
+    stderrData += data.toString();
+  });
+
+  python.on("close", (code) => {
+    const cleanupFile = () => {
+      try {
+        if (fs.existsSync(uploadedFilePath)) {
+          fs.unlinkSync(uploadedFilePath);
+        }
+      } catch (err) {
+        console.error("Failed to delete uploaded file:", err);
+      }
+    };
+
+    if (code !== 0) {
+      cleanupFile();
+      jobManager.failJob(jobId, {
+        message: "Python script failed",
+        details: stderrData || "Script exited with non-zero code",
+        exit_code: code,
+      });
+      return;
+    }
+
+    if (!stdoutData || stdoutData.trim().length === 0) {
+      cleanupFile();
+      jobManager.failJob(jobId, {
+        message: "Python script produced no output",
+        details: "The analysis script did not return any results",
+        stderr: stderrData,
+      });
+      return;
+    }
+
+    try {
+      let jsonStr = stdoutData.trim();
+
+      const firstBrace = jsonStr.indexOf("{");
+      const lastBrace = jsonStr.lastIndexOf("}");
+
+      if (firstBrace !== -1 && lastBrace !== -1) {
+        jsonStr = jsonStr.substring(firstBrace, lastBrace + 1);
+      }
+
+      const result = JSON.parse(jsonStr);
+
+      if (!result.success) {
+        cleanupFile();
+        jobManager.failJob(jobId, result.error || "Analysis failed");
+        return;
+      }
+
+      const excelPath = path.join(resultsDir, result.excel_file);
+      if (!fs.existsSync(excelPath)) {
+        cleanupFile();
+        jobManager.failJob(jobId, {
+          message: "Excel file was not created",
+          expected_path: excelPath,
+        });
+        return;
+      }
+
+      cleanupFile();
+
+      // Mark job as completed with results
+      jobManager.completeJob(jobId, {
+        message: "Analysis completed successfully",
+        downloadUrl: `/api/v1/analysis/download/${result.excel_file}`,
+        excelFile: result.excel_file,
+        dataSource: result.data_source,
+        summary: result.summary,
+        onpageResults: result.onpage_results || [],
+        keywordMapping: result.keyword_mapping || [],
+      });
+    } catch (parseError) {
+      cleanupFile();
+      jobManager.failJob(jobId, {
+        message: "Failed to parse analysis results",
+        details: parseError.message,
+        raw_output: stdoutData.substring(0, 1000),
+        stderr: stderrData,
+      });
+    }
+  });
+
+  python.on("error", (err) => {
+    try {
+      if (fs.existsSync(uploadedFilePath)) {
+        fs.unlinkSync(uploadedFilePath);
+      }
+    } catch (unlinkErr) {
+      console.error("Failed to delete uploaded file:", unlinkErr);
+    }
+
+    jobManager.failJob(jobId, {
+      message: "Failed to execute Python script",
+      details: err.message,
+      hint: "Make sure Python is installed and in PATH",
+    });
+  });
+
+  // Timeout handling
+  const timeout = setTimeout(() => {
+    python.kill();
+
+    try {
+      if (fs.existsSync(uploadedFilePath)) {
+        fs.unlinkSync(uploadedFilePath);
+      }
+    } catch (err) {
+      console.error("Failed to delete uploaded file:", err);
+    }
+
+    jobManager.failJob(jobId, {
+      message: "Analysis timeout",
+      details: "The analysis took too long and was terminated",
+    });
+  }, 600000); // 10 minutes
+
+  python.on("close", () => {
+    clearTimeout(timeout);
+  });
+}
+
+/**
+ * Controller for file analysis - Now runs as background job
+ */
 function analyzeFileController(req, res, pyScriptPath, uploadDir, resultsDir) {
   let uploadedFilePath = null;
 
@@ -52,143 +213,83 @@ function analyzeFileController(req, res, pyScriptPath, uploadDir, resultsDir) {
 
   ensureDir(resultsDir);
 
-  const python = spawn("python", [
-    pyScriptPath,
+  // Generate unique job ID
+  const jobId = generateJobId();
+
+  // Create job in job manager
+  jobManager.createJob(jobId, {
+    filename: path.basename(uploadedFilePath),
+    filterOption,
+  });
+
+  // Start background processing
+  processAnalysisJob(
+    jobId,
     uploadedFilePath,
     filterOption,
+    pyScriptPath,
     resultsDir,
-  ]);
+  );
 
-  let stdoutData = "";
-  let stderrData = "";
-
-  python.stdout.on("data", (data) => {
-    stdoutData += data.toString();
+  // Return immediately with job ID
+  return res.json({
+    success: true,
+    jobId,
+    status: "processing",
+    message: "Analysis started. Use the jobId to check progress.",
   });
+}
 
-  python.stderr.on("data", (data) => {
-    stderrData += data.toString();
-  });
+/**
+ * Get job status controller
+ */
+function getJobStatus(req, res) {
+  const { jobId } = req.params;
 
-  python.on("close", (code) => {
-    const cleanupFile = () => {
-      try {
-        if (fs.existsSync(uploadedFilePath)) {
-          fs.unlinkSync(uploadedFilePath);
-        }
-      } catch (err) {
-        console.error("Failed to delete uploaded file:", err);
-      }
-    };
+  const job = jobManager.getJob(jobId);
 
-    if (code !== 0) {
-      cleanupFile();
-      return res.status(500).json({
-        success: false,
-        error: "Python script failed",
-        details: stderrData || "Script exited with non-zero code",
-        exit_code: code,
-      });
-    }
-
-    if (!stdoutData || stdoutData.trim().length === 0) {
-      cleanupFile();
-      return res.status(500).json({
-        success: false,
-        error: "Python script produced no output",
-        details: "The analysis script did not return any results",
-        stderr: stderrData,
-      });
-    }
-
-    try {
-      let jsonStr = stdoutData.trim();
-
-      const firstBrace = jsonStr.indexOf("{");
-      const lastBrace = jsonStr.lastIndexOf("}");
-
-      if (firstBrace !== -1 && lastBrace !== -1) {
-        jsonStr = jsonStr.substring(firstBrace, lastBrace + 1);
-      }
-
-      const result = JSON.parse(jsonStr);
-
-      if (!result.success) {
-        cleanupFile();
-        return res.status(400).json(result);
-      }
-
-      const excelPath = path.join(resultsDir, result.excel_file);
-      if (!fs.existsSync(excelPath)) {
-        cleanupFile();
-        return res.status(500).json({
-          success: false,
-          error: "Excel file was not created",
-          expected_path: excelPath,
-        });
-      }
-
-      cleanupFile();
-
-      res.json({
-        success: true,
-        message: "Analysis completed successfully",
-        downloadUrl: `/api/v1/analysis/download/${result.excel_file}`,
-        excelFile: result.excel_file,
-        dataSource: result.data_source,
-        summary: result.summary,
-        onpageResults: result.onpage_results || [],
-        keywordMapping: result.keyword_mapping || [],
-      });
-    } catch (parseError) {
-      cleanupFile();
-      res.status(500).json({
-        success: false,
-        error: "Failed to parse analysis results",
-        details: parseError.message,
-        raw_output: stdoutData.substring(0, 1000),
-        stderr: stderrData,
-      });
-    }
-  });
-
-  python.on("error", (err) => {
-    try {
-      if (fs.existsSync(uploadedFilePath)) {
-        fs.unlinkSync(uploadedFilePath);
-      }
-    } catch (unlinkErr) {
-      console.error("Failed to delete uploaded file:", unlinkErr);
-    }
-
-    res.status(500).json({
+  if (!job) {
+    return res.status(404).json({
       success: false,
-      error: "Failed to execute Python script",
-      details: err.message,
-      hint: "Make sure Python is installed and in PATH",
+      error: "Job not found",
+      jobId,
     });
-  });
+  }
 
-  const timeout = setTimeout(() => {
-    python.kill();
+  // Return job status
+  if (job.status === "processing") {
+    return res.json({
+      success: true,
+      jobId: job.jobId,
+      status: job.status,
+      progress: job.progress,
+      message: "Analysis in progress",
+    });
+  }
 
-    try {
-      if (fs.existsSync(uploadedFilePath)) {
-        fs.unlinkSync(uploadedFilePath);
-      }
-    } catch (err) {
-      console.error("Failed to delete uploaded file:", err);
-    }
+  if (job.status === "completed") {
+    return res.json({
+      success: true,
+      jobId: job.jobId,
+      status: job.status,
+      ...job.result,
+    });
+  }
 
-    res.status(504).json({
+  if (job.status === "failed") {
+    return res.status(400).json({
       success: false,
-      error: "Analysis timeout",
-      details: "The analysis took too long and was terminated",
+      jobId: job.jobId,
+      status: job.status,
+      error: job.error,
     });
-  }, 600000);
+  }
 
-  python.on("close", () => {
-    clearTimeout(timeout);
+  // Fallback
+  return res.json({
+    success: true,
+    jobId: job.jobId,
+    status: job.status,
   });
 }
 
@@ -439,6 +540,7 @@ const getDataWithGoogle = async (req, res) => {
 
 module.exports = {
   analyzeFileController,
+  getJobStatus,
   ensureDir,
   getSites,
   getDataWithGoogle,

@@ -2,6 +2,7 @@
 
 import Load from '@/components/feature/file-scan-loading';
 import { Button } from '@/components/ui/button';
+import { useJobPolling } from '@/hooks/use-job-polling';
 import { fileUploadAction } from '@/lib/actions/file-upload.action';
 import { cn } from '@/lib/utils/cn';
 import { ChevronRight } from 'lucide-react';
@@ -23,6 +24,7 @@ export default function FileUploadForm() {
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [jobId, setJobId] = useState<string | null>(null);
   const [analysisOption, setAnalysisOption] = useState<'recommended' | 'all'>(
     'recommended'
   );
@@ -31,6 +33,25 @@ export default function FileUploadForm() {
 
   // Ref
   const inputRef = useRef<HTMLInputElement | null>(null);
+
+  // Job polling hook
+  const jobStatus = useJobPolling({
+    jobId,
+    interval: 60000, // Poll every 1 minute
+    onCompleted: result => {
+      setIsUploading(false);
+      setJobId(null);
+
+      // Store result and navigate to result page
+      sessionStorage.setItem('analysisResult', JSON.stringify(result));
+      router.push('/result');
+    },
+    onFailed: error => {
+      setIsUploading(false);
+      setJobId(null);
+      alert('Analysis failed: ' + (error?.message || error || 'Unknown error'));
+    },
+  });
 
   // Drag & Drop Handlers
   const handleDragOver = (e: DragEventType) => {
@@ -75,17 +96,20 @@ export default function FileUploadForm() {
     try {
       const response = await fileUploadAction(formData);
 
-      if (response.success) {
+      if (response.success && response.jobId) {
+        // New behavior: Set jobId to start polling
+        setJobId(response.jobId);
+      } else if (response.success) {
+        // Legacy behavior: Direct response (for backward compatibility)
         sessionStorage.setItem('analysisResult', JSON.stringify(response));
-
         router.push('/result');
-        return;
+        setIsUploading(false);
       } else {
         alert('Error: ' + response.message);
+        setIsUploading(false);
       }
     } catch (err: any) {
       alert('Upload failed: ' + err.message);
-    } finally {
       setIsUploading(false);
     }
   };
