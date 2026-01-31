@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { getCodeAction } from '@/lib/actions/get-code.action';
 import { getSitesAction } from '@/lib/actions/get-sites.action';
+import { getGoogleAuthUrlAction } from '@/lib/actions/google-auth.action';
 import { useEffect, useState } from 'react';
 import GoogleAnalysisModal from './google-analysis-modal';
 
@@ -37,10 +38,15 @@ export default function GoogleLogin() {
               // Clean URL
               window.history.replaceState({}, '', '/');
             } else {
+              console.error('Sites error:', sitesData);
               alert('Failed to fetch sites from Google Search Console');
             }
           } else {
-            alert('Failed to authenticate with Google');
+            console.error('Auth error:', data);
+            alert(
+              'Failed to authenticate with Google: ' +
+                (data.message || 'Unknown error')
+            );
           }
         } catch (err) {
           alert('Failed to connect to Google Search Console');
@@ -53,24 +59,8 @@ export default function GoogleLogin() {
     checkForCode();
   }, []);
 
-  const login = () => {
-    const params = {
-      client_id:
-        '816118067676-0ril5bauojsupkedd6jgok9t90628ts3.apps.googleusercontent.com',
-      redirect_uri: process.env.NEXT_PUBLIC_REDIRECT_URI as string,
-      response_type: 'code',
-      access_type: 'offline',
-      prompt: 'consent',
-      scope: [
-        'https://www.googleapis.com/auth/webmasters',
-        'https://www.googleapis.com/auth/webmasters.readonly',
-      ].join(' '),
-    };
-
-    const url =
-      'https://accounts.google.com/o/oauth2/v2/auth?' +
-      new URLSearchParams(params).toString();
-
+  const login = async () => {
+    const { url } = await getGoogleAuthUrlAction();
     window.location.href = url;
   };
 
