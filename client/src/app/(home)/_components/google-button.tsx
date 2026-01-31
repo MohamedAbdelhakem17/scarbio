@@ -21,35 +21,34 @@ export default function GoogleLogin() {
 
       if (code) {
         setIsLoading(true);
+
+        // Clean URL immediately to prevent code reuse
+        window.history.replaceState({}, '', '/');
+
         try {
           // Get tokens
           const data = await getCodeAction(code);
 
           if (data.status === 'success' && data.tokens) {
-            setTokens(data.tokens);
-
             // Get sites
             const sitesData = await getSitesAction(data.tokens);
 
             if (sitesData.status === 'success' && sitesData.sites) {
+              setTokens(data.tokens);
               setSites(sitesData.sites);
               setIsModalOpen(true);
-
-              // Clean URL
-              window.history.replaceState({}, '', '/');
             } else {
-              console.error('Sites error:', sitesData);
-              alert('Failed to fetch sites from Google Search Console');
+              const errorMsg =
+                sitesData.message || sitesData.error || 'Failed to fetch sites';
+              alert('Error: ' + errorMsg);
             }
           } else {
-            console.error('Auth error:', data);
-            alert(
-              'Failed to authenticate with Google: ' +
-                (data.message || 'Unknown error')
-            );
+            const errorMsg = data.message || data.error || 'Unknown error';
+            alert('Failed to authenticate with Google: ' + errorMsg);
           }
-        } catch (err) {
-          alert('Failed to connect to Google Search Console');
+        } catch (err: any) {
+          const errorMsg = err?.message || 'Connection failed';
+          alert('Error: ' + errorMsg);
         } finally {
           setIsLoading(false);
         }

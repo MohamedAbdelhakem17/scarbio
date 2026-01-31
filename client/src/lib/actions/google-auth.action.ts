@@ -1,10 +1,7 @@
 'use server';
 
 export async function getGoogleAuthUrlAction() {
-  const redirectUri =
-    process.env.G_REDIRECT_URI ||
-    process.env.G_REDIRECT_URL ||
-    'https://scarabio.com/';
+  const redirectUri = process.env.REDIRECT_URI || 'http://localhost:3000/';
 
   const params = {
     client_id:
