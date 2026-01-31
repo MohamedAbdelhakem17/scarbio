@@ -6,14 +6,14 @@ from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from google.auth.transport.requests import Request
 
-
+ROE_LIMITED= 500
 def get_gsc_data(service, site_url, start_date, end_date):
     """Get GSC data with page and query dimensions"""
     request = {
         "startDate": start_date,
         "endDate": end_date,
         "dimensions": ["page", "query"],
-        "rowLimit": 1000
+        "rowLimit": ROE_LIMITED
     }
 
     response = service.searchanalytics().query(

@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { getCodeAction } from '@/lib/actions/get-code.action';
 import { getSitesAction } from '@/lib/actions/get-sites.action';
+import { getGoogleAuthUrlAction } from '@/lib/actions/google-auth.action';
 import { useEffect, useState } from 'react';
 import GoogleAnalysisModal from './google-analysis-modal';
 
@@ -20,30 +21,34 @@ export default function GoogleLogin() {
 
       if (code) {
         setIsLoading(true);
+
+        // Clean URL immediately to prevent code reuse
+        window.history.replaceState({}, '', '/');
+
         try {
           // Get tokens
           const data = await getCodeAction(code);
 
           if (data.status === 'success' && data.tokens) {
-            setTokens(data.tokens);
-
             // Get sites
             const sitesData = await getSitesAction(data.tokens);
 
             if (sitesData.status === 'success' && sitesData.sites) {
+              setTokens(data.tokens);
               setSites(sitesData.sites);
               setIsModalOpen(true);
-
-              // Clean URL
-              window.history.replaceState({}, '', '/');
             } else {
-              alert('Failed to fetch sites from Google Search Console');
+              const errorMsg =
+                sitesData.message || sitesData.error || 'Failed to fetch sites';
+              alert('Error: ' + errorMsg);
             }
           } else {
-            alert('Failed to authenticate with Google');
+            const errorMsg = data.message || data.error || 'Unknown error';
+            alert('Failed to authenticate with Google: ' + errorMsg);
           }
-        } catch (err) {
-          alert('Failed to connect to Google Search Console');
+        } catch (err: any) {
+          const errorMsg = err?.message || 'Connection failed';
+          alert('Error: ' + errorMsg);
         } finally {
           setIsLoading(false);
         }
@@ -53,28 +58,10 @@ export default function GoogleLogin() {
     checkForCode();
   }, []);
 
-  const login = () => {
-    const params = {
-      client_id:
-        '816118067676-0ril5bauojsupkedd6jgok9t90628ts3.apps.googleusercontent.com',
-      redirect_uri: process.env.NEXT_PUBLIC_REDIRECT_URI as string,
-      response_type: 'code',
-      access_type: 'offline',
-      prompt: 'consent',
-      scope: [
-        'https://www.googleapis.com/auth/webmasters',
-        'https://www.googleapis.com/auth/webmasters.readonly',
-      ].join(' '),
-    };
-
-    const url =
-      'https://accounts.google.com/o/oauth2/v2/auth?' +
-      new URLSearchParams(params).toString();
-
+  const login = async () => {
+    const { url } = await getGoogleAuthUrlAction();
     window.location.href = url;
   };
-
-  return isLoading;
 
   return (
     <>
