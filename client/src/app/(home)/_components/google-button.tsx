@@ -74,8 +74,6 @@ export default function GoogleLogin() {
     window.location.href = url;
   };
 
-  return isLoading;
-
   return (
     <>
       <div className='flex justify-center'>
