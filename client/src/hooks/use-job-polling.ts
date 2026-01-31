@@ -42,22 +42,14 @@ export const useJobPolling = ({
 
   const pollJobStatus = useCallback(async () => {
     if (!jobId) {
-      console.log('[POLLING] No jobId, skipping poll');
       return;
     }
 
-    console.log('[POLLING] Checking job status for:', jobId);
-
     try {
       const response = await checkJobStatus(jobId);
-      console.log('[POLLING] Response received:', response);
 
       if (response.success) {
         if (response.status === 'processing') {
-          console.log(
-            '[POLLING] Job is processing, progress:',
-            response.progress
-          );
           setJobStatus({
             status: 'processing',
             progress: response.progress || 0,
@@ -66,7 +58,6 @@ export const useJobPolling = ({
             message: response.message || 'Processing...',
           });
         } else if (response.status === 'completed') {
-          console.log('[POLLING] ✅ Job completed!', response);
           setJobStatus({
             status: 'completed',
             progress: 100,
@@ -83,7 +74,6 @@ export const useJobPolling = ({
 
           onCompletedRef.current?.(response);
         } else if (response.status === 'failed') {
-          console.error('[POLLING] ❌ Job failed:', response.error);
           setJobStatus({
             status: 'failed',
             progress: 0,
@@ -102,7 +92,6 @@ export const useJobPolling = ({
         }
       } else {
         // Error in checking status
-        console.error('[POLLING] Response not successful:', response);
         setJobStatus({
           status: 'failed',
           progress: 0,
@@ -119,7 +108,6 @@ export const useJobPolling = ({
         onFailedRef.current?.(response.error || response.message);
       }
     } catch (error) {
-      console.error('Polling error:', error);
       setJobStatus({
         status: 'failed',
         progress: 0,
@@ -139,24 +127,17 @@ export const useJobPolling = ({
 
   useEffect(() => {
     if (!jobId) {
-      console.log('[POLLING] No jobId in useEffect, not starting polling');
       return;
     }
-
-    console.log(
-      `[POLLING] Starting polling for jobId: ${jobId}, interval: ${interval}ms`
-    );
 
     // Initial poll immediately
     pollJobStatus();
 
     // Set up interval for subsequent polls
     intervalRef.current = setInterval(pollJobStatus, interval);
-    console.log('[POLLING] Interval set, ID:', intervalRef.current);
 
     // Cleanup on unmount or when jobId changes
     return () => {
-      console.log('[POLLING] Cleaning up interval');
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;

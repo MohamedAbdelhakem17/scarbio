@@ -9,13 +9,7 @@ function ensureDir(dir) {
   }
 }
 
-function analyzeFileController(
-  req,
-  res,
-  pyScriptPath,
-  uploadDir,
-  resultsDir
-) {
+function analyzeFileController(req, res, pyScriptPath, uploadDir, resultsDir) {
   if (!req.file) {
     return res.status(400).json({
       success: false,
@@ -50,7 +44,7 @@ function analyzeFileController(
     try {
       fs.unlinkSync(uploadedFilePath);
     } catch (err) {
-      console.error("Failed to delete uploaded file:", err);
+      // Failed to delete file
     }
 
     if (code !== 0) {
@@ -95,7 +89,7 @@ function analyzeFileController(
     try {
       fs.unlinkSync(uploadedFilePath);
     } catch (unlinkErr) {
-      console.error("Failed to delete uploaded file:", unlinkErr);
+      // Failed to delete file
     }
 
     res.status(500).json({

@@ -53,7 +53,7 @@ function processAnalysisJob(
           fs.unlinkSync(uploadedFilePath);
         }
       } catch (err) {
-        console.error("Failed to delete uploaded file:", err);
+        // Failed to delete file
       }
     };
 
@@ -134,7 +134,7 @@ function processAnalysisJob(
         fs.unlinkSync(uploadedFilePath);
       }
     } catch (unlinkErr) {
-      console.error("Failed to delete uploaded file:", unlinkErr);
+      // Failed to delete file
     }
 
     jobManager.failJob(jobId, {
@@ -153,7 +153,7 @@ function processAnalysisJob(
         fs.unlinkSync(uploadedFilePath);
       }
     } catch (err) {
-      console.error("Failed to delete uploaded file:", err);
+      // Failed to delete file
     }
 
     jobManager.failJob(jobId, {
@@ -314,6 +314,7 @@ const getSites = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { code } = req.query;
+
     if (!code) {
       return res
         .status(400)
@@ -326,10 +327,15 @@ const login = async (req, res) => {
         .json({ status: "error", message: "Missing OAuth credentials" });
     }
 
+    const redirectUri =
+      process.env.G_REDIRECT_URI ||
+      process.env.G_REDIRECT_URL ||
+      "https://scarabio.com/";
+
     const oauth2Client = new google.auth.OAuth2(
       process.env.G_CLIENT_ID,
       process.env.G_CLIENT_SECRET,
-      "http://localhost:3000/",
+      redirectUri,
     );
 
     const { tokens } = await oauth2Client.getToken(code);
@@ -338,7 +344,6 @@ const login = async (req, res) => {
       __dirname,
       "../../service/analyze-with-google/gsc_step1.py",
     );
-
     const py = spawn("python", [pyFile], { stdio: ["pipe", "pipe", "pipe"] });
     py.stdin.write(JSON.stringify(tokens));
     py.stdin.end();

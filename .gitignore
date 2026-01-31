@@ -12,3 +12,11 @@ server/results/*/*
 **/.env.local
 server/.env.local
 client/.env.local
+
+./server/.env.local
+./client/.env.local
+
+# Ignore log files
+*.log
+
+*.env
