@@ -1,0 +1,63 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SCARBIO_SSH_HOST }}
+          username: ${{ secrets.SCARBIO_USER_KEY }}
+          key: ${{ secrets.SCARBIO_SSH_KEY }}
+          script: |
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "🚀 SCARBIO DEPLOYMENT STARTED"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
+
+            echo "📦 [CLIENT] Navigating to client directory..."
+            cd /var/www/scarbio/client
+
+            echo "⬇️  [CLIENT] Installing dependencies..."
+            npm install
+
+            echo "🔨 [CLIENT] Building application..."
+            npm run build
+
+            echo "▶️  [CLIENT] Starting application..."
+            npm run start
+
+            echo "♻️  [CLIENT] Restarting PM2 process 'scarbio'..."
+            pm2 restart scarbio
+            echo "✅ [CLIENT] Deployment completed successfully!"
+            echo ""
+
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+            echo "📦 [SERVER] Navigating to server directory..."
+            cd ../server
+
+            echo "⬇️  [SERVER] Installing dependencies..."
+            npm install
+
+            echo "🔨 [SERVER] Building application..."
+            npm run build
+
+            echo "♻️  [SERVER] Restarting PM2 process 'scarbio-api'..."
+            pm2 restart scarbio-api
+            echo "✅ [SERVER] Deployment completed successfully!"
+            echo ""
+
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "🎉 DEPLOYMENT COMPLETED SUCCESSFULLY!"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
