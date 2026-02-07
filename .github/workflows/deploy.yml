@@ -20,10 +20,16 @@ jobs:
           username: ${{ secrets.SCARBIO_USER_KEY }}
           key: ${{ secrets.SCARBIO_SSH_KEY }}
           script: |
+            set -e
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo "🚀 SCARBIO DEPLOYMENT STARTED"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo ""
+
+            echo "🔄 [GIT] Fetching latest changes from origin..."
+            cd /var/www/scarbio
+            git fetch origin
+            git reset --hard origin/main
 
             echo "📦 [CLIENT] Navigating to client directory..."
             cd /var/www/scarbio/client
