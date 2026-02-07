@@ -28,12 +28,14 @@ function processAnalysisJob(
   pyScriptPath,
   resultsDir,
 ) {
-  const python = spawn("python", [
-    pyScriptPath,
-    uploadedFilePath,
-    filterOption,
-    resultsDir,
-  ]);
+  const python = spawn(
+    "python",
+    [pyScriptPath, uploadedFilePath, filterOption, resultsDir],
+    {
+      shell: true, // Enable shell on Windows
+      windowsHide: true, // Hide console window on Windows
+    },
+  );
 
   let stdoutData = "";
   let stderrData = "";
@@ -160,7 +162,7 @@ function processAnalysisJob(
       message: "Analysis timeout",
       details: "The analysis took too long and was terminated",
     });
-  }, 600000); // 10 minutes
+  }, 3600000); // 1 hour
 
   python.on("close", () => {
     clearTimeout(timeout);
@@ -344,7 +346,11 @@ const login = async (req, res) => {
       __dirname,
       "../../service/analyze-with-google/gsc_step1.py",
     );
-    const py = spawn("python", [pyFile], { stdio: ["pipe", "pipe", "pipe"] });
+    const py = spawn("python", [pyFile], {
+      stdio: ["pipe", "pipe", "pipe"],
+      shell: true,
+      windowsHide: true,
+    });
     py.stdin.write(JSON.stringify(tokens));
     py.stdin.end();
 
@@ -420,6 +426,8 @@ const getDataWithGoogle = async (req, res) => {
     const py = spawn("python", [pyFile], {
       stdio: ["pipe", "pipe", "pipe"],
       env: { ...process.env, PYTHONIOENCODING: "utf-8" },
+      shell: true,
+      windowsHide: true,
     });
 
     let output = "";
