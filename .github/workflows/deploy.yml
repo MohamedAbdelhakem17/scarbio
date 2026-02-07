@@ -41,7 +41,7 @@ jobs:
             npm run build
 
             echo "♻️  [CLIENT] Restarting PM2 process 'scarbio'..."
-            pm2 restart scarbio
+            pm2 restart scarabio
             echo "✅ [CLIENT] Deployment completed successfully!"
             echo ""
 
@@ -54,7 +54,7 @@ jobs:
             npm install
 
             echo "♻️  [SERVER] Restarting PM2 process 'scarbio-api'..."
-            pm2 restart scarbio-api
+            pm2 restart scarabio-api
             echo "✅ [SERVER] Deployment completed successfully!"
             echo ""
 
