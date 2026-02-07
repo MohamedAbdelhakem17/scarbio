@@ -54,7 +54,9 @@ export default function GoogleAnalysisModal({
     onFailed: error => {
       setIsAnalyzing(false);
       setJobId(null);
-      alert('Analysis failed: ' + (error?.message || error || 'Unknown error'));
+      console.log(
+        'Analysis failed: ' + (error?.message || error || 'Unknown error')
+      );
     },
   });
 
@@ -91,11 +93,13 @@ export default function GoogleAnalysisModal({
         setFilename(data.filename);
         setRowCount(data.rowCount || data.count || 0);
       } else {
-        alert('Failed to fetch data: ' + (data.message || 'Unknown error'));
+        console.log(
+          'Failed to fetch data: ' + (data.message || 'Unknown error')
+        );
         setSelectedSite(null);
       }
     } catch (err: any) {
-      alert('Error: ' + err.message);
+      console.log('Error: ' + err.message);
       setSelectedSite(null);
     } finally {
       setLoadingSite(null);
@@ -127,11 +131,11 @@ export default function GoogleAnalysisModal({
         onClose();
         setIsAnalyzing(false);
       } else {
-        alert('Error: ' + (response.message || 'Analysis failed'));
+        console.log('Error: ' + (response.message || 'Analysis failed'));
         setIsAnalyzing(false);
       }
     } catch (err: any) {
-      alert('Analysis failed: ' + err.message);
+      console.log('Analysis failed: ' + err.message);
       setIsAnalyzing(false);
     }
   };
