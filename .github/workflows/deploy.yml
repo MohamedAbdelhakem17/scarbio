@@ -40,9 +40,6 @@ jobs:
             echo "🔨 [CLIENT] Building application..."
             npm run build
 
-            echo "▶️  [CLIENT] Starting application..."
-            npm run start
-
             echo "♻️  [CLIENT] Restarting PM2 process 'scarbio'..."
             pm2 restart scarbio
             echo "✅ [CLIENT] Deployment completed successfully!"
@@ -55,9 +52,6 @@ jobs:
 
             echo "⬇️  [SERVER] Installing dependencies..."
             npm install
-
-            echo "🔨 [SERVER] Building application..."
-            npm run build
 
             echo "♻️  [SERVER] Restarting PM2 process 'scarbio-api'..."
             pm2 restart scarbio-api
