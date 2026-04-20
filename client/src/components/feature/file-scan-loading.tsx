@@ -93,19 +93,19 @@ const Load = ({ rows = 15 }: LoadProps) => {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
           transition={{ duration: 0.4 }}
-          className='relative w-full max-w-2xl rounded-3xl bg-white p-10 shadow-2xl shadow-black/20 backdrop-blur-sm'
+          className='relative max-h-[88vh] w-[min(92vw,42rem)] overflow-y-auto rounded-2xl bg-white px-5 py-6 shadow-2xl shadow-black/20 backdrop-blur-sm sm:px-7 sm:py-7'
         >
           {/* Background Lights */}
           <div
-            className='absolute -right-20 -top-20 h-40 w-40 rounded-full'
+            className='absolute -right-16 -top-16 h-28 w-28 rounded-full sm:h-32 sm:w-32'
             style={{ backgroundColor: brand.light, filter: 'blur(80px)' }}
           />
           <div
-            className='absolute -bottom-20 -left-20 h-40 w-40 rounded-full'
+            className='absolute -bottom-16 -left-16 h-28 w-28 rounded-full sm:h-32 sm:w-32'
             style={{ backgroundColor: brand.soft, filter: 'blur(80px)' }}
           />
 
-          <div className='relative flex flex-col items-center space-y-8'>
+          <div className='relative flex flex-col items-center space-y-5 sm:space-y-6'>
             {/* Lottie */}
             <motion.div
               animate={{ scale: [1, 1.02, 1] }}
@@ -115,7 +115,7 @@ const Load = ({ rows = 15 }: LoadProps) => {
                 src='/document-checking-loader.json'
                 loop
                 autoplay
-                className='w-96 object-contain'
+                className='w-56 object-contain sm:w-64 lg:w-72'
               />
             </motion.div>
 
@@ -123,24 +123,27 @@ const Load = ({ rows = 15 }: LoadProps) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className='text-2xl font-bold'
+              className='text-lg font-bold sm:text-xl'
               style={{ color: brand.base }}
             >
               Analyzing Data
             </motion.h2>
 
-            <div className='w-full space-y-4'>
+            <div className='w-full space-y-3 sm:space-y-4'>
               {/* Stats */}
-              <div className='grid grid-cols-3 gap-4'>
+              <div className='grid grid-cols-3 gap-2 sm:gap-3'>
                 {/* Current Row */}
                 <motion.div
                   whileHover={{ scale: 1.05 }}
-                  className='rounded-2xl p-4 text-center'
+                  className='rounded-xl p-2.5 text-center sm:p-3'
                   style={{
                     background: `linear-gradient(135deg, ${brand.light}, ${brand.soft})`,
                   }}
                 >
-                  <p className='text-sm' style={{ color: brand.medium }}>
+                  <p
+                    className='text-[11px] sm:text-xs'
+                    style={{ color: brand.medium }}
+                  >
                     Current Row
                   </p>
 
@@ -151,7 +154,7 @@ const Load = ({ rows = 15 }: LoadProps) => {
                       animate={{ y: 0, opacity: 1 }}
                       exit={{ y: -10, opacity: 0 }}
                       transition={{ duration: 0.2 }}
-                      className='text-3xl font-bold'
+                      className='text-xl font-bold sm:text-2xl'
                       style={{ color: brand.base }}
                     >
                       {currentRow}
@@ -162,16 +165,19 @@ const Load = ({ rows = 15 }: LoadProps) => {
                 {/* Total Rows */}
                 <motion.div
                   whileHover={{ scale: 1.05 }}
-                  className='rounded-2xl p-4 text-center'
+                  className='rounded-xl p-2.5 text-center sm:p-3'
                   style={{
                     background: `linear-gradient(135deg, ${brand.light}80, ${brand.soft}80)`,
                   }}
                 >
-                  <p className='text-sm' style={{ color: brand.medium }}>
+                  <p
+                    className='text-[11px] sm:text-xs'
+                    style={{ color: brand.medium }}
+                  >
                     Total Rows
                   </p>
                   <p
-                    className='text-3xl font-bold'
+                    className='text-xl font-bold sm:text-2xl'
                     style={{ color: brand.base }}
                   >
                     {rows}
@@ -181,16 +187,19 @@ const Load = ({ rows = 15 }: LoadProps) => {
                 {/* Progress */}
                 <motion.div
                   whileHover={{ scale: 1.05 }}
-                  className='rounded-2xl p-4 text-center'
+                  className='rounded-xl p-2.5 text-center sm:p-3'
                   style={{
                     background: `linear-gradient(135deg, ${brand.light}50, ${brand.soft}50)`,
                   }}
                 >
-                  <p className='text-sm' style={{ color: brand.medium }}>
+                  <p
+                    className='text-[11px] sm:text-xs'
+                    style={{ color: brand.medium }}
+                  >
                     Progress
                   </p>
                   <div
-                    className='text-3xl font-bold'
+                    className='text-xl font-bold sm:text-2xl'
                     style={{ color: brand.base }}
                   >
                     {Math.floor(progress)}%
@@ -200,11 +209,11 @@ const Load = ({ rows = 15 }: LoadProps) => {
 
               {/* Progress Bar */}
               <div
-                className='relative overflow-hidden rounded-full p-1 shadow-inner'
+                className='relative overflow-hidden rounded-full p-0.5 shadow-inner'
                 style={{ backgroundColor: brand.light }}
               >
                 <div
-                  className='relative h-6 overflow-hidden rounded-full'
+                  className='relative h-4 overflow-hidden rounded-full sm:h-5'
                   style={{
                     background: `linear-gradient(to right, ${brand.light}, ${brand.soft})`,
                   }}
@@ -234,7 +243,7 @@ const Load = ({ rows = 15 }: LoadProps) => {
 
                   <div className='absolute inset-0 flex items-center justify-center'>
                     <span
-                      className='text-xs font-bold drop-shadow-sm'
+                      className='text-[10px] font-bold drop-shadow-sm sm:text-xs'
                       style={{ color: brand.soft }}
                     >
                       {Math.floor(progress)}%
@@ -244,7 +253,7 @@ const Load = ({ rows = 15 }: LoadProps) => {
               </div>
 
               <p
-                className='text-center text-sm'
+                className='text-center text-xs sm:text-sm'
                 style={{ color: brand.medium }}
               >
                 Please wait while processing completes...
@@ -255,20 +264,20 @@ const Load = ({ rows = 15 }: LoadProps) => {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.5 }}
-                className='mt-4 rounded-xl border-2 p-4'
+                className='mt-2 rounded-lg border-2 p-3 sm:mt-3 sm:p-4'
                 style={{
                   borderColor: brand.soft,
                   backgroundColor: 'rgba(255, 243, 224, 0.5)',
                 }}
               >
                 <p
-                  className='text-center text-sm font-semibold'
+                  className='text-center text-xs font-semibold sm:text-sm'
                   style={{ color: brand.dark }}
                 >
                   ⚠️ Important: Do not close or refresh this page
                 </p>
                 <p
-                  className='mt-1 text-center text-xs'
+                  className='mt-1 text-center text-[11px] sm:text-xs'
                   style={{ color: brand.medium }}
                 >
                   Your analysis is running in the background. Closing this page
@@ -286,7 +295,7 @@ const Load = ({ rows = 15 }: LoadProps) => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.35, ease: 'linear' }}
-                className='text-center text-sm font-medium'
+                className='text-center text-xs font-medium leading-relaxed sm:text-sm'
                 style={{ color: brand.medium }}
               >
                 {seoInsights[insightIndex]}
