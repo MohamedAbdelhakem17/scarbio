@@ -122,56 +122,79 @@ class SilentKeywordAnalyzer:
     def get_page_content(self, url, timeout=30000):
         try:
             from playwright.sync_api import sync_playwright
-            
+            from playwright_stealth import Stealth
+
             with sync_playwright() as p:
                 browser = p.chromium.launch(
                     headless=True,
                     args=[
                         '--disable-blink-features=AutomationControlled',
                         '--no-sandbox',
-                        '--disable-dev-shm-usage'
+                        '--disable-dev-shm-usage',
+                        '--disable-web-security',
+                        '--disable-features=IsolateOrigins,site-per-process',
                     ]
                 )
-                
+
                 context = browser.new_context(
                     viewport={'width': 1920, 'height': 1080},
-                    user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                    user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    locale='ar-SA',
+                    timezone_id='Asia/Riyadh',
+                    extra_http_headers={
+                        'Accept-Language': 'ar-SA,ar;q=0.9,en;q=0.8',
+                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                        'Accept-Encoding': 'gzip, deflate, br',
+                        'Upgrade-Insecure-Requests': '1',
+                        'Sec-Fetch-Dest': 'document',
+                        'Sec-Fetch-Mode': 'navigate',
+                        'Sec-Fetch-Site': 'none',
+                    }
                 )
-                
+
                 page = context.new_page()
-                
-                page.add_init_script("""
-                    Object.defineProperty(navigator, 'webdriver', {
-                        get: () => undefined
-                    });
-                """)
-                
-                page.goto(url, wait_until='networkidle', timeout=timeout)
-                time.sleep(2)
+                Stealth().apply_stealth_sync(page)
+
+                page.goto(url, wait_until='domcontentloaded', timeout=timeout)
+
+                # Wait for Cloudflare/bot-challenge to clear if present
+                try:
+                    page.wait_for_function(
+                        "() => !document.querySelector('#cf-spinner-allow-5-sec') && "
+                        "!document.querySelector('.cf-browser-verification') && "
+                        "!document.querySelector('#challenge-running')",
+                        timeout=15000
+                    )
+                except Exception:
+                    pass
+
+                time.sleep(3)
                 page.wait_for_selector('body', timeout=5000)
-                
+
                 html_content = page.content()
                 browser.close()
-                
+
                 return BeautifulSoup(html_content, 'html.parser')
-            
+
         except Exception:
             try:
                 from playwright.sync_api import sync_playwright
-                
+                from playwright_stealth import Stealth
+
                 with sync_playwright() as p:
                     browser = p.chromium.launch(headless=True)
                     context = browser.new_context(
                         user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
                     )
                     page = context.new_page()
+                    Stealth().apply_stealth_sync(page)
                     page.goto(url, wait_until='domcontentloaded', timeout=60000)
                     time.sleep(3)
                     html_content = page.content()
                     browser.close()
-                    
+
                     return BeautifulSoup(html_content, 'html.parser')
-                    
+
             except Exception:
                 return None
     
