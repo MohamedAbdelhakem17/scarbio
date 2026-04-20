@@ -1,7 +1,29 @@
-// server.js
-require("dotenv").config({
-  path: require("path").join(__dirname, "../.env.local"),
-});
+// ====== Load Environment Variables ======
+const path = require("path");
+const fs = require("fs");
+
+// Try multiple .env file locations in order of priority
+const envFiles = [
+  path.join(__dirname, "../.env"),
+  path.join(__dirname, "../.env.local"),
+];
+
+// Find the first existing .env file
+let envPath = null;
+for (const filePath of envFiles) {
+  if (fs.existsSync(filePath)) {
+    envPath = filePath;
+    break;
+  }
+}
+
+// Load the environment variables
+if (envPath) {
+  require("dotenv").config({ path: envPath });
+} else {
+  console.warn("⚠️ No .env file found. Using system environment variables.");
+  require("dotenv").config({ path: path.join(__dirname, "../.env.local") });
+}
 
 const express = require("express");
 const http = require("http");
